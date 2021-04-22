@@ -1,0 +1,5 @@
+- ClassJusticeMatchingProblem getest en klaar
+- paar bugjes in de StateSummary opgelost voor zowel ClassJustice als de gewone StudentProjectMatching
+Hij toont nu ook de hoogste categorie en de raadselachtige null, null, null rij verschijnt niet meer.
+
+WK 31-03-2018
