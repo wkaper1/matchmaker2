@@ -5,7 +5,7 @@ import nl.uva.science.esc.search.techniques.*;
 
 /**
  * Tests for ManyToOneMatchingProblem
- * including two Techniques: DepthFirstSearch and SimulatedAnnealing
+ * including three Techniques: DepthFirstSearch, Breadthfirstsearch and SimulatedAnnealing
  * @author kaper
  *
  */
@@ -23,6 +23,7 @@ public class TestManyToOneMatching {
 		
 		//write the problems
 		p[1] = new ManyToOneMatchingProblem(
+				new int[] {0, 0, 0, 0, 0}, 
 				new int[] {1, 1, 1, 1, 1}, 
 				new int[][] {
 						{5, 4, 3, 2, 1},
@@ -31,10 +32,11 @@ public class TestManyToOneMatching {
 						{2, 1, 2, 3, 4},
 						{1, 2, 3, 4, 5}
 				},
-				"indentity",
+				"identity",
 				5
 		);
 		p[2] = new ManyToOneMatchingProblem(
+				new int[] {0, 0, 0, 0}, 
 				new int[] {1, 1, 1, 1},
 				new int[][] {
 						{4, 3, 2, 1},
@@ -42,10 +44,11 @@ public class TestManyToOneMatching {
 						{2, 1, 2, 3},
 						{1, 2, 3, 4}
 				},
-				"indentity",
+				"identity",
 				4
 		);
 		p[3] = new ManyToOneMatchingProblem(
+				new int[] {0, 0, 0, 0, 0, 0, 0}, 
 				new int[] {1, 1, 1, 1, 1, 1, 1},
 				new int[][] {
 						{7, 6, 5, 4, 3, 2, 1},
@@ -56,10 +59,11 @@ public class TestManyToOneMatching {
 						{2, 1, 2, 3, 4, 5, 6},
 						{1, 2, 3, 4, 5, 6, 7},
 				},
-				"indentity",
+				"identity",
 				7
 		);
 		p[4] = new ManyToOneMatchingProblem(
+				new int[] {0, 0, 0, 0, 0, 0, 0, 0}, 
 				new int[] {1, 1, 1, 1, 1, 1, 1, 1},
 				new int[][] {
 						{8, 7, 6, 5, 4, 3, 2, 1},
@@ -71,10 +75,11 @@ public class TestManyToOneMatching {
 						{2, 1, 2, 3, 4, 5, 6, 7},
 						{1, 2, 3, 4, 5, 6, 7, 8},
 				},
-				"indentity",
+				"identity",
 				8
 		);
 		p[5] = new ManyToOneMatchingProblem(
+				new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0}, 
 				new int[] {1, 1, 1, 1, 1, 1, 1, 1, 1},
 				new int[][] {
 						{9, 8, 7, 6, 5, 4, 3, 2, 1},
@@ -87,10 +92,11 @@ public class TestManyToOneMatching {
 						{2, 1, 2, 3, 4, 5, 6, 7, 8},
 						{1, 2, 3, 4, 5, 6, 7, 8, 9},
 				},
-				"indentity",
+				"identity",
 				9
 		);
 		p[6] = new ManyToOneMatchingProblem(
+				new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 
 				new int[] {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 				new int[][] {
 						{10, 9, 8, 7, 6, 5, 4, 3, 2, 1},
@@ -104,10 +110,11 @@ public class TestManyToOneMatching {
 						{2, 1, 2, 3, 4, 5, 6, 7, 8, 9},
 						{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 				},
-				"indentity",
+				"identity",
 				10
 		);
 		p[9] = new ManyToOneMatchingProblem(
+				new int[] {0, 0, 0, 0},
 				new int[] {2, 2, 1, 1},
 				new int[][] {
 						{4, 3, 2, 1},
@@ -117,13 +124,13 @@ public class TestManyToOneMatching {
 						{1, 2, 3, 4},
 						{1, 2, 3, 4}
 				},
-				"indentity",
+				"identity",
 				6
 		);
 		
 		//choose a problem and a technique
 		ManyToOneMatchingProblem px = p[6];
-		String tx = "simulatedannealing";
+		String tx = "breadthfirstsearch";
 		
 		if (tx=="simulatedannealing") {
 			//tweak parameters in the call below

@@ -80,7 +80,7 @@ public class ClassJusticeMatchingProblem extends ManyToOneMatchingProblem
 		this.studPrefCutoff = studPrefCutoff;
 		this.ABPreferences = calcABPreferences(); //protected property of base class
 		this.ABPreferencesT = this.transformPrefs(ABPreferences, transformprefs);
-		initPlacesAndPlans(BMax);     //protected method in base class
+		initPlacesAndPlans(BMax, BMax);     //protected method in base class      //TODO: BMin
 		this.numberOfAs = numberOfAs;  //protected property of base class
 		this.numCategories = Max(this.ACategory)+1;
 	}//end constructor
@@ -106,7 +106,7 @@ public class ClassJusticeMatchingProblem extends ManyToOneMatchingProblem
 		this.studPrefCutoff = Integer.parseInt( parametervalues[2] );
 		this.ABPreferences = calcABPreferences(); //protected property of base class
 		this.ABPreferencesT = this.transformPrefs(ABPreferences, parametervalues[1]);
-		initPlacesAndPlans( sc.getBMax() );      //protected method in base class
+		initPlacesAndPlans( sc.getBMax(), sc.getBMax() );      //protected method in base class   //TODO: sc.getBMin()
 		this.numberOfAs = sc.getnumberOfAs();    //protected property of base class
 		this.numCategories = Max(this.ACategory)+1;
 	}//end StudentProjectMatchingProblemFactory

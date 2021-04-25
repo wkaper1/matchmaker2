@@ -79,7 +79,7 @@ public class StudentProjectMatchingProblem extends ManyToOneMatchingProblem
 		this.projPrefCutoff = projPrefCutoff;
 		this.ABPreferences = calcABPreferences(); //protected property of base class
 		this.ABPreferencesT = this.transformPrefs(ABPreferences, transformprefs);
-		initPlacesAndPlans(BMax);     //protected method in base class
+		initPlacesAndPlans(BMax, BMax);     //protected method in base class      //TODO: BMin
 		this.numberOfAs = numberOfAs;  //protected property of base class
 	}//end constructor
 	
@@ -102,7 +102,7 @@ public class StudentProjectMatchingProblem extends ManyToOneMatchingProblem
 		this.projPrefCutoff = Integer.parseInt( parametervalues[5] );
 		this.ABPreferences = calcABPreferences(); //protected property of base class
 		this.ABPreferencesT = this.transformPrefs(ABPreferences, parametervalues[3]);
-		initPlacesAndPlans( sc.getBMax() );      //protected method in base class
+		initPlacesAndPlans( sc.getBMax(), sc.getBMax() );      //protected method in base class   //TODO: sc.getBMin()
 		this.numberOfAs = sc.getnumberOfAs();    //protected property of base class
 	}//end StudentProjectMatchingProblemFactory
 	
