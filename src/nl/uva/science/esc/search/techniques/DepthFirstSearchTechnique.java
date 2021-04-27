@@ -24,10 +24,15 @@ public class DepthFirstSearchTechnique implements Technique {
 	private static final long UNKNOWNCOST = 99999;
 	private DeterministicSearchProblem p;   //the problem to solve !
 	private boolean running;   //we can stop the process by setting this to no
-	
-	public DepthFirstSearchTechnique(DeterministicSearchProblem p, int maxlevel) {
+
+	/**
+	 * Constructor of the thechnique
+	 * @param p, the problem to solve
+	 * @param levels, number of levels to develop in the search tree
+	 */
+	public DepthFirstSearchTechnique(DeterministicSearchProblem p, int levels) {
 		this.p = p;
-		movestack = new ArrayDeque<Move>(maxlevel);
+		movestack = new ArrayDeque<Move>(levels);
 		cost = 0;  //the cost of an empty solution branch is zero
 		leafcount = 0;
 		beststate = null;  //initially there is no solution known
@@ -41,21 +46,19 @@ public class DepthFirstSearchTechnique implements Technique {
 		running = true;
 		p.initState(); //different from stochastic which needs a GOAL state for starters!
 		boolean ok = p.generateDeterministicMove(movestack.size());
-		assert ok==true; //very first move succeeds, so we realise it immediately
+		assert ok==true; //first move should succeed
 		do { 
 			//start new goal seek
-			while (!p.goalTest(movestack.size()) ) {
-				//use generated move
-				assert ok==true;  //a second or higher forward move succeeds, 
-				//unless we are at a goal state already
+			while (!p.goalTest(movestack.size()) && ok ) {
+				//use generated move 
 				cost += p.getDeltaCostDeterministicMove();
 				Move m = p.doForwardMove();
 				movestack.push(m);
 				ok = p.generateDeterministicMove(movestack.size()); //may return false, but...
 			}//end while
 			leafcount++;
-			//we have a candidate, is it better than earlier ones?
-			if (cost<bestcost || beststate==null) {
+			//we have a leaf, but is it a valid leaf, is it a goalstate?
+			if (p.goalTest(movestack.size()) && (cost<bestcost || beststate==null)) {
 				//bestmoves = movestack.toArray(new Move[0]);
 				beststate = p.getState().stateClone();
 				bestcost = cost;
@@ -69,7 +72,7 @@ public class DepthFirstSearchTechnique implements Technique {
 				System.out.println("bestleaf: "+bestleaf);
 				System.out.println();
 			}//end if
-			//after getting to the end of a branch we need to retreat
+			//after getting to a leaf we need to retreat
 			//at least once and maybe more, to get rid of nodes which
 			//are out of moves (all have been tried)
 			do { //at least once
@@ -120,30 +123,19 @@ public class DepthFirstSearchTechnique implements Technique {
 	public DeterministicSearchProblem getProblem() {
 		return p;
 	}//end getProblem
-
-	/**
-	 * This one returns a safe copy
-	 * @return
-	 */
-	//public Move[] getBestMoves() {
-	//	Move[] copy = new Move[bestmoves.length];
-	//	System.arraycopy(bestmoves, 0, copy, 0, bestmoves.length);
-	//	return copy;
-	//}//end getBestMoves
 	
 	/**
-	 * Return a readable description of all the best moves
+	 * Return a readable description of the best goal state found
 	 * @return the text
 	 */
-	//public String showBestMoves() {
-	//	String txt = "";
-	//	txt += "bestcost: "+bestcost+"\n";
-	//	for (int i=0; i<bestmoves.length; i++) {
-	//		txt += bestmoves[i].toString()+"\n";
-	//	}//end for
-	//	return txt;
-	//}//end showBestMoves
-	
+	public String showBestState() {
+		String txt = "";
+		txt += "bestcost: "+bestcost+"\n";
+		p.setState(beststate);
+		txt += p.showState();
+		return txt;
+	}//end showBestMoves	
+
 	/**
 	 * Send the run method a stop signal
 	 */

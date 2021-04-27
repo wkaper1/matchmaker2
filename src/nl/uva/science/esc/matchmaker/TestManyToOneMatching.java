@@ -22,7 +22,22 @@ public class TestManyToOneMatching {
 		p = new ManyToOneMatchingProblem[10];
 		
 		//write the problems
+		
+		//a series of problems to test efficiency and scaling with N (problem size)
+		//   as well as finding the right solution - they have one obviously best solution
 		p[1] = new ManyToOneMatchingProblem(
+				new int[] {0, 0, 0, 0}, 
+				new int[] {1, 1, 1, 1},
+				new int[][] {
+						{4, 3, 2, 1},
+						{3, 2, 1, 2},
+						{2, 1, 2, 3},
+						{1, 2, 3, 4}
+				},
+				"identity",
+				4
+		);
+		p[2] = new ManyToOneMatchingProblem(
 				new int[] {0, 0, 0, 0, 0}, 
 				new int[] {1, 1, 1, 1, 1}, 
 				new int[][] {
@@ -34,18 +49,6 @@ public class TestManyToOneMatching {
 				},
 				"identity",
 				5
-		);
-		p[2] = new ManyToOneMatchingProblem(
-				new int[] {0, 0, 0, 0}, 
-				new int[] {1, 1, 1, 1},
-				new int[][] {
-						{4, 3, 2, 1},
-						{3, 2, 1, 2},
-						{2, 1, 2, 3},
-						{1, 2, 3, 4}
-				},
-				"identity",
-				4
 		);
 		p[3] = new ManyToOneMatchingProblem(
 				new int[] {0, 0, 0, 0, 0, 0, 0}, 
@@ -112,10 +115,40 @@ public class TestManyToOneMatching {
 				},
 				"identity",
 				10
-		);
-		p[9] = new ManyToOneMatchingProblem(
+		);	
+		//A test for the max participants: there are 6 participants and 8 places (solution is obvious)
+		p[7] = new ManyToOneMatchingProblem(
 				new int[] {0, 0, 0, 0},
-				new int[] {2, 2, 1, 1},
+				new int[] {3, 3, 1, 1},
+				new int[][] {
+						{4, 3, 2, 1},
+						{3, 2, 1, 2},
+						{2, 1, 2, 3},
+						{2, 1, 2, 3},
+						{1, 2, 3, 4},
+						{1, 2, 3, 4}
+				},
+				"identity",
+				6
+		);
+		//Two tests for minimum participants
+		p[8] = new ManyToOneMatchingProblem(  //again obvious solution
+				new int[] {1, 1, 2, 2},
+				new int[] {2, 2, 3, 3},
+				new int[][] {
+						{4, 3, 2, 1},
+						{4, 3, 2, 1},
+						{3, 2, 1, 4},
+						{3, 2, 1, 4},
+						{2, 1, 4, 3},
+						{1, 2, 3, 4}
+				},
+				"identity",
+				6
+		);
+		p[9] = new ManyToOneMatchingProblem(  //less obvious solution - not everybody gets 1st choice
+				new int[] {1, 1, 2, 2},
+				new int[] {2, 2, 3, 3},
 				new int[][] {
 						{4, 3, 2, 1},
 						{3, 2, 1, 2},
@@ -129,8 +162,8 @@ public class TestManyToOneMatching {
 		);
 		
 		//choose a problem and a technique
-		ManyToOneMatchingProblem px = p[6];
-		String tx = "breadthfirstsearch";
+		ManyToOneMatchingProblem px = p[9];
+		String tx = "simulatedannealing";
 		
 		if (tx=="simulatedannealing") {
 			//tweak parameters in the call below
@@ -144,19 +177,18 @@ public class TestManyToOneMatching {
 		if (tx=="depthfirstsearch") {
 			//there is not much to tweak in this one...
 			DepthFirstSearchTechnique t = new DepthFirstSearchTechnique(
-					px, px.getNumberOfAs()
+					px, px.getNumberOfPlaces()
 			);
 			t.run();
-			//the best solution is not kept in the problem, now...
-			System.out.println(""); //showbestmoves does no longer exist... it was only for testing...
+			System.out.println( t.showBestState() );
 		}//end if
 		if (tx=="breadthfirstsearch") {
 			//again a simple one without interesting parameters
 			BreadthFirstSearchTechnique t = new BreadthFirstSearchTechnique(
-					px, px.getNumberOfAs()
+					px, px.getNumberOfPlaces()
 			);
 			t.run();
-			System.out.println( t.showBestState() ); //need to standardize this a bit more
+			System.out.println( t.showBestState() );
 		}//end if
 	}//end main
 

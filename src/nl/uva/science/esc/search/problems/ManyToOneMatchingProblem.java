@@ -144,6 +144,10 @@ public class ManyToOneMatchingProblem
 		return numberOfAs;
 	}//end getNumberOfAs
 	
+	public int getNumberOfPlaces() {
+		return places.length;
+	}//end getNumberOfPlaces
+	
 
 	//shared public / private methods between both technique-families
 
@@ -305,7 +309,7 @@ public class ManyToOneMatchingProblem
 						j++;
 					}
 				}
-				if (j >= places.length) {
+				if (j == places.length) {
 					//we're past the end of the first pass: all mandatory places are filled
 					mandatoryReady = true;
 					j = 0;  //start second pass
@@ -320,6 +324,15 @@ public class ManyToOneMatchingProblem
 				places[j] = i;
 				j++;
 			}
+			//in case we run out of A's during the first pass
+			if (!mandatoryReady) {
+				boolean remainingPlacesNotMandatory = true; //no problems found yet
+				for (int k=j; k<places.length; k++) {
+					if (PlaceMandatory[k]) 
+						remainingPlacesNotMandatory = false;
+				}
+				mandatoryReady = remainingPlacesNotMandatory;
+			}
 		}
 		else 
 			throw new Exception("Not enough places for all of the As offered by the Bs.");
@@ -333,6 +346,7 @@ public class ManyToOneMatchingProblem
 	 * 
 	 * Choose two places to swap their contents.
 	 * Reject the move and generate a new one if...:
+	 * - the chosen places are equal OR
 	 * - both places are empty OR
 	 * - one of the places is empty and the other place mandatory to fill
 	 */
@@ -342,7 +356,8 @@ public class ManyToOneMatchingProblem
 			swapplace1 = (int) Math.floor(Math.random()*places.length);
 			swapplace2 = (int) Math.floor(Math.random()*places.length);						
 		} while (
-			places[swapplace1] == EMPTYPLACE && places[swapplace2] == EMPTYPLACE
+			swapplace1 == swapplace2
+			|| places[swapplace1] == EMPTYPLACE && places[swapplace2] == EMPTYPLACE
 			|| places[swapplace1] == EMPTYPLACE && PlaceMandatory[swapplace2]
 			|| places[swapplace2] == EMPTYPLACE && PlaceMandatory[swapplace1]
 		);
@@ -417,6 +432,8 @@ public class ManyToOneMatchingProblem
 	 */
 	@Override
 	public boolean generateDeterministicMove(int level) {
+		if (level >= places.length)
+			return false;
 		placetofill = level;
 		//Find next unmatched A 
 		if (addableA==NOPLANYET) addableA = -1;
@@ -461,8 +478,10 @@ public class ManyToOneMatchingProblem
 	public Move doForwardMove() {
 		//add the A to the planned place
 		places[placetofill] = addableA;
-		if (addableA != EMPTYPLACE)
+		if (addableA != EMPTYPLACE) {
 			isAmatched[addableA] = true;
+			numAToMatch--;			
+		}
 		//package the move for putting it on the stack
 		Move mv = new ManyToOneMatchingMove(addableA, placetofill);
 		//fresh node: we should start without search history
@@ -491,7 +510,10 @@ public class ManyToOneMatchingProblem
 		this.placetofill = m.getLevel();
 		//do the move in reverse, to restore the original state
 		places[placetofill] = EMPTYPLACE;
-		if (addableA != EMPTYPLACE) isAmatched[addableA] = false;
+		if (addableA != EMPTYPLACE) {
+			isAmatched[addableA] = false;
+			numAToMatch++;
+		}
 		//note: we keep the history of the node by not deleting placetofill
 	}//end retreatMove
 	
