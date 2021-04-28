@@ -13,8 +13,8 @@ import org.json.*;
  * retrieved from a file or from a webservice (superclass takes care of that).
  * 
  * Parsing the JSON object results in two things:
- * - The arrays (BMax[], ABPreferencesStud[][], ABPreferencesProj[][], ACategory[], 
- *   numberOfAs), which are needed to construct the problem;
+ * - The arrays (BMin[], BMax[], ABPreferencesStud[][], ABPreferencesProj[][], 
+ *   ACategory[], numberOfAs), which are needed to construct the problem;
  * - Translation arrays: from actual database ids to temporary consequtive
  *   counting ids. Two such translation arrays will arise: StudId[], and ProjId[]
  * 
@@ -29,7 +29,7 @@ import org.json.*;
  * 
  * The JSON problem description object has these properties:
  * - hash projectPlaces
- *   { String projectid => int numberOfPlaces }
+ *   { String projectid => [ int minPlaces,  maxPlaces ] }
  * - hash studentCategory
  *   { String studentid => int category }
  * - hash studentProjectPreferences
@@ -53,6 +53,7 @@ import org.json.*;
 public class StudentProjectMatchingProblemConnector extends ProblemConnector {
 	//data that we should deliver after reading the problem description
 	private int numberOfAs;  //see constructor of Problem
+	private int[] BMin;
 	private int[] BMax;
 	private int[][] ABPreferencesStud;
 	private int[][] ABPreferencesProj;
@@ -85,7 +86,7 @@ public class StudentProjectMatchingProblemConnector extends ProblemConnector {
 	public boolean[] advertiseFeatures() {
 		return new boolean[] {
 				true,  //Mockup: we deliver configured problem data 
-				true, //File reading/writing: not yet
+				true,  //File reading/writing: yes
 				false, //Webservice get/post: not yet
 		};
 	}//end advertiseFeatures
@@ -106,6 +107,7 @@ public class StudentProjectMatchingProblemConnector extends ProblemConnector {
 		switch (0) {
 		case 0:
 			this.numberOfAs = 4;
+			this.BMin = new int[] {0, 0, 0, 0};
 			this.BMax = new int[] {1, 1, 1, 1};
 			this.ABPreferencesProj = new int[][] {
 					{4, 3, 2, 1},
@@ -121,6 +123,7 @@ public class StudentProjectMatchingProblemConnector extends ProblemConnector {
 			};
 		case 1:
 			this.numberOfAs = 10;
+			this.BMin = new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 			this.BMax = new int[] {1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 			this.ABPreferencesProj = new int[][] {
 					{10, 9, 8, 7, 6, 5, 4, 3, 2, 1},
@@ -147,7 +150,8 @@ public class StudentProjectMatchingProblemConnector extends ProblemConnector {
 					{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 			};
 		case 2:
-			this.numberOfAs = 6;
+			this.numberOfAs = 5;
+			this.BMin = new int[] {2, 1, 1, 0};
 			this.BMax = new int[] {2, 2, 1, 1};
 			this.ABPreferencesProj = new int[][] {
 					{4, 3, 2, 1},
@@ -182,6 +186,7 @@ public class StudentProjectMatchingProblemConnector extends ProblemConnector {
 		}
 		//read projectPlaces and create BMax plus ProjId translation array
 		JSONObject pp = json.getJSONObject("projectPlaces");
+		BMin = new int[pp.length()];
 		BMax = new int[pp.length()];
 		ProjId = new String[pp.length()];
 		Map<String, Integer> projNr = new HashMap<String, Integer>(); //reverse of ProjId[]
@@ -189,8 +194,12 @@ public class StudentProjectMatchingProblemConnector extends ProblemConnector {
 		int sumplaces = 0;
 		for (int i=0; i<pp.length(); i++) {
 			ProjId[i] = k.next();
-			BMax[i] = pp.getInt(ProjId[i]);
-			projNr.put(ProjId[i], new Integer(i)); //enable reverse lookups
+			JSONArray minmax = pp.getJSONArray(ProjId[i]);
+			if (minmax.length() != 2)
+				throw new InvalidProblemException("projectPlaces hash: array value length 2 expected, found: " + minmax.length());
+			BMin[i] = minmax.getInt(0);
+			BMax[i] = minmax.getInt(1);
+			projNr.put(ProjId[i], Integer.valueOf(i)); //enable reverse lookups
 			sumplaces += BMax[i];
 		}//end for
 		//checks
@@ -260,6 +269,10 @@ public class StudentProjectMatchingProblemConnector extends ProblemConnector {
 	public int[] getBMax() {
 		return BMax;
 	}//end getBMax
+	
+	public int[] getBMin() {
+		return BMin;
+	}//end getBMin
 	
 	public int[][] getABPreferencesStud() {
 		return ABPreferencesStud;

@@ -100,7 +100,7 @@ public class ManyToOneMatchingProblem
 		ProblemConnector c, String[] parametervalues
 	) {
 		ManyToOneMatchingProblemConnector sc = (ManyToOneMatchingProblemConnector) c;
-		initPlacesAndPlans( sc.getBMax(), sc.getBMax() );   //TODO: first parameter should be sc.GetBMin
+		initPlacesAndPlans( sc.getBMin(), sc.getBMax() ); 
 		this.ABPreferences = sc.getABPreferences();
 		this.ABPreferencesT = transformPrefs(ABPreferences, parametervalues[0]);
 		this.numberOfAs = sc.getnumberOfAs();

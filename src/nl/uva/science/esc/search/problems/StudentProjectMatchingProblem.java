@@ -9,7 +9,8 @@ import nl.uva.science.esc.search.views.Parameter;
 /**
  * Each student is to be assigned to a single project.
  * A project can employ one or more students. For each project instance, a
- * different maximum number of students is set.
+ * different maximum number of students is set (and a required minimum can
+ * also be set, or it can be zero).
  * Both parties (students and projects) indicated preferences for eachother
  * So for each student-project combination we have two preferences numbers,
  * Pstudent[s,p] and PProject[s,p], that are to be weighted into a single
@@ -61,13 +62,14 @@ public class StudentProjectMatchingProblem extends ManyToOneMatchingProblem
 	 * @param numberOfAs, how many students to link to projects
 	 * @param WStud, weight for students preferences
 	 * @param WProj, weight for the project supervisors preferences
+	 * @param BMin, minimum number of students for each project
 	 * @param BMax, maximum number of students for each project
 	 * @param ABPreferencesStud, preference of student A for project B
 	 * @param ABPreferencesProj, preference of project B for student A
 	 */
 	public StudentProjectMatchingProblem(
 			int numberOfAs, int WStud, int WProj, int defaultPref,
-			int[] BMax, int[][] ABPreferencesStud, int[][] ABPreferencesProj,
+			int[] BMin, int[] BMax, int[][] ABPreferencesStud, int[][] ABPreferencesProj,
 			String transformprefs, int studPrefCutoff, int projPrefCutoff
 	) {
 		this.WStud = WStud;
@@ -79,7 +81,7 @@ public class StudentProjectMatchingProblem extends ManyToOneMatchingProblem
 		this.projPrefCutoff = projPrefCutoff;
 		this.ABPreferences = calcABPreferences(); //protected property of base class
 		this.ABPreferencesT = this.transformPrefs(ABPreferences, transformprefs);
-		initPlacesAndPlans(BMax, BMax);     //protected method in base class      //TODO: BMin
+		initPlacesAndPlans(BMin, BMax);     //protected method in base class
 		this.numberOfAs = numberOfAs;  //protected property of base class
 	}//end constructor
 	
@@ -102,7 +104,7 @@ public class StudentProjectMatchingProblem extends ManyToOneMatchingProblem
 		this.projPrefCutoff = Integer.parseInt( parametervalues[5] );
 		this.ABPreferences = calcABPreferences(); //protected property of base class
 		this.ABPreferencesT = this.transformPrefs(ABPreferences, parametervalues[3]);
-		initPlacesAndPlans( sc.getBMax(), sc.getBMax() );      //protected method in base class   //TODO: sc.getBMin()
+		initPlacesAndPlans( sc.getBMin(), sc.getBMax() );      //protected method in base class
 		this.numberOfAs = sc.getnumberOfAs();    //protected property of base class
 	}//end StudentProjectMatchingProblemFactory
 	
