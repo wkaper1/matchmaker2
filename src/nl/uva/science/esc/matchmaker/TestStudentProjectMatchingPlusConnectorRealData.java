@@ -30,9 +30,9 @@ public class TestStudentProjectMatchingPlusConnectorRealData {
 	public static final String projectPrefCutoff = "3";
 	
 	//technique parameters
-	public static final double initialTemperature = 70000;
+	public static final double initialTemperature = 500000;
 	public static final int waittime = 100000;
-	public static final float temperaturedrop = (float) 0.98;
+	public static final float temperaturedrop = (float) 0.9995;
 	public static final double closetozerotemp = 0.1;
 	public static final int maxtriesinvain = 100000;
 	
