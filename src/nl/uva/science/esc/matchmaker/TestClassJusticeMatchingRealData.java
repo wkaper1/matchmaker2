@@ -27,9 +27,9 @@ public class TestClassJusticeMatchingRealData {
 	//Separate transformations for two categories: first-time and return students
 	//Preference multipliers, translations
 	//Scheme 1: distribute the low-preference tail away from firsttimers
-	public static final int firstTimeMultiplier = 5;
+	public static final int firstTimeMultiplier = 7;
 	public static final int returnMultiplier = 1;
-	public static final int returnTranslation = 4;
+	public static final int returnTranslation = 6;
 	//Scheme 2: invert the scale, e.g. to 'punish' students that didn't make the required nr of choices 
 //	public static final int firstTimeMultiplier = 1;  //it's NOT a great idea!
 //	public static final int returnMultiplier = -1;
@@ -38,8 +38,8 @@ public class TestClassJusticeMatchingRealData {
 	//technique parameters
 	public static final double initialTemperature = 10;
 	public static final int waittime = 100000;
-	public static final float temperaturedrop = (float) 0.9984;
-	public static final double closetozerotemp = 0.25;
+	public static final float temperaturedrop = (float) 0.9997;
+	public static final double closetozerotemp = 0.4;
 	public static final int maxtriesinvain = 100000;
 	
 	//reporting parameters

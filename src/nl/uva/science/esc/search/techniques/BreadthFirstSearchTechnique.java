@@ -72,7 +72,7 @@ public class BreadthFirstSearchTechnique implements Technique {
 				//for debugging, comment out in production
 				if (nodecount % 1000 ==0) {
 					System.out.println("nodes generated: "+nodecount);
-					System.out.println("goals states: "+goalcount);
+					System.out.println("goal states: "+goalcount);
 					System.out.println("best cost: "+bestcost);
 					System.out.println();
 				}//end if

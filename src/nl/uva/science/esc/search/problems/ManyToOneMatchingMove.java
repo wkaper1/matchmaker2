@@ -2,7 +2,7 @@ package nl.uva.science.esc.search.problems;
 
 /**
  * Deterministic Move while solving the ManyToOneMatching problem
- * In this problem, a Move consists of adding a single A to an empty place
+ * In this problem, a Move consists of filling a place with an A (may be EMPTYPLACE)
  * @author kaper
  *
  */
@@ -28,8 +28,15 @@ public class ManyToOneMatchingMove implements Move {
 	 */
 	@Override
 	public int getLevel() {
-		return addableA;
+		return placetofill;
 	}//end getLevel
+
+	/**
+	 * @return addableA
+	 */
+	public int getAddableA() {
+		return addableA;
+	}
 	
 	/**
 	 * @return placetofill

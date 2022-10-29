@@ -13,12 +13,20 @@ import nl.uva.science.esc.search.views.Parameter;
  * ...up to a maximum which is different per individual B.
  * The sum of these maxima has to be larger than or equal to the number of A's,
  * otherwise a solution does not exist.
+ * Also a B can require a minimum number of A's. The minimum can be zero however.
+ * The sum of these minima has to be smaller or equal to the number of A's.
  * 
  * Each A-B pair has a preference number assigned to it (with the lowest
  * numbers indicating the best preferences).
  * As every A has to find a match, we have a known number of matches to make.
  * The problem is to find the set of matches, where the sum of the realized
- * preferences is minimal.
+ * preferences is minimal. After all A's are matched, some available B-places
+ * will remain empty, but the minimum number for each project should be filled.
+ * 
+ * We can just as well describe the task from the standpoint of B's. There is
+ * a fixed number of available B-places. Each B-place needs to be matched to 
+ * either an A or emptyness, in such a way that in the end all A's are matched
+ * and the required minimum number of B-places (in each project) is matched too. 
  * 
  * This is a base class that has at least one extension. 
  * @author kaper
@@ -32,24 +40,29 @@ public class ManyToOneMatchingProblem
 	//This represents the current problem state.
 	private int places[];
 	
+	//redundant state info, used by the deterministic techniques for efficiency
+	private boolean isAmatched[]; //For each A-id (index): is it matched?
+	private int numAToMatch; //How many As do we still have to match?
+	
 	//Move: plan for the next change
 	//Plan for a stochastic move: swap the contents of two places
 	private int swapplace1;
 	private int swapplace2;
-	//Plan for a deterministic move: add an A to an empty place
-	private int addableA;
+	//Plan for a deterministic move: fill a place using an up-to-now unmatched A
 	private int placetofill;
+	private int addableA;
 	
 	//Fixed problem data
 	protected int BPlaces[]; //For each place: to which B does it belong.
+	protected boolean PlaceMandatory[]; //For each place: is it mandatory to fill it? Each project may have some mandatory places
 	protected int ABPreferences[][]; //For each A,B pair the original preference is given: for reporting.
 	protected long ABPreferencesT[][]; //For each A,B pair the transformed preference is given: for use in optimizing
 	protected int numberOfAs;  //How many As are there
 	
 	//constants
 	public static final int EMPTYPLACE = 9999; //should not be an A-id
-	private static final int NOPLANYET = 9999; //should not be an A-id and
-	  //not a place number either
+	private static final int NOPLANYET = 9998; //should not be an A-id and
+	  //not a place number either, should be different from EMPTYPLACE
 
 	/**
 	 * Specific constructor
@@ -61,12 +74,14 @@ public class ManyToOneMatchingProblem
 	 * @param numberOfAs, How many As are there
 	 */
 	public ManyToOneMatchingProblem(
-		int[] BMax, int[][] ABPreferences, String transformprefs, int numberOfAs
+		int[] BMin, int[] BMax, int[][] ABPreferences, String transformprefs, int numberOfAs
 	) {
-		initPlacesAndPlans(BMax);
+		initPlacesAndPlans(BMin, BMax);
 		this.ABPreferences = ABPreferences;
 		this.ABPreferencesT = this.transformPrefs(ABPreferences, transformprefs);
 		this.numberOfAs = numberOfAs;
+		this.numAToMatch = numberOfAs;
+		this.isAmatched = new boolean[numberOfAs];
 	}//end constructor
 	
 	/**
@@ -85,36 +100,41 @@ public class ManyToOneMatchingProblem
 		ProblemConnector c, String[] parametervalues
 	) {
 		ManyToOneMatchingProblemConnector sc = (ManyToOneMatchingProblemConnector) c;
-		initPlacesAndPlans( sc.getBMax() );
+		initPlacesAndPlans( sc.getBMin(), sc.getBMax() ); 
 		this.ABPreferences = sc.getABPreferences();
 		this.ABPreferencesT = transformPrefs(ABPreferences, parametervalues[0]);
 		this.numberOfAs = sc.getnumberOfAs();
+		this.numAToMatch = numberOfAs;
+		this.isAmatched = new boolean[numberOfAs];
 	}//end StudentProjectMatchingProblemFactory
 	
 	/**
 	 * This protected method is really part of the "shared constructor"
-	 * @param BMax, maximum number of A's for each B
+	 * @param BMin, for each B-id (index) the minimum number of A's
+	 * @param BMax, for each B-id (index) the maximum number of A's
 	 */
-	protected void initPlacesAndPlans(int[] BMax) {
-		//Find out the number of places as well as to which B they belong
+	protected void initPlacesAndPlans(int[] BMin, int[] BMax) {
+		//Find out the number of places, to which B they belong, whether they are mandatory
 		int i=0;
 		for(int j=0; j<BMax.length; j++) {
 			i += BMax[j];
 		}//end for
 		this.places = new int[i]; //we know the number of places...!
 		this.BPlaces = new int[i];
+		this.PlaceMandatory = new boolean[i];
 		i = 0;
 		for(int j=0; j<BMax.length; j++) {
 			for(int k=0; k<BMax[j]; k++) {
 				this.BPlaces[i] = j; //register B-j as owner of place i
+				this.PlaceMandatory[i] = (k < BMin[j]) ? true : false;
 				i++;
 			}//end for
 		}//end for
 		//Plans: innocent defaults
 		swapplace1 = NOPLANYET;
 		swapplace2 = NOPLANYET;
-		addableA = NOPLANYET;
 		placetofill = NOPLANYET;		
+		addableA = NOPLANYET;
 	}//end initPlacesAndPlans
 	
 	
@@ -123,6 +143,10 @@ public class ManyToOneMatchingProblem
 	public int getNumberOfAs() {
 		return numberOfAs;
 	}//end getNumberOfAs
+	
+	public int getNumberOfPlaces() {
+		return places.length;
+	}//end getNumberOfPlaces
 	
 
 	//shared public / private methods between both technique-families
@@ -170,7 +194,7 @@ public class ManyToOneMatchingProblem
 	 * @return the State
 	 */
 	public State getState() {
-		return new ManyToOneMatchingState(places, this);
+		return new ManyToOneMatchingState(places, isAmatched, numAToMatch, this);
 	}//end getState
 	
 	/**
@@ -180,7 +204,9 @@ public class ManyToOneMatchingProblem
 	public void setState(State s) {
 		ManyToOneMatchingState s1 = (ManyToOneMatchingState) s;
 		this.places = s1.getPlaces();
-		this.placetofill = -1;  //we should start without search history
+		this.isAmatched = s1.isAmatched();
+		this.numAToMatch = s1.getNumAToMatch();
+		this.addableA = -1; //we should start without search history (determinstic only)
 	}//end setState
 	
 	/**
@@ -259,28 +285,70 @@ public class ManyToOneMatchingProblem
 	/* (non-Javadoc)
 	 * @see nl.uva.science.esc.search.problems.StochasticOptimisationProblem#initGoalState()
 	 * 
-	 * We create a goal state by arbitrarily filling the first numberOfAs
+	 * We create an initial goal state by arbitrarily filling the first numberOfAs
 	 * places just in order: student 0 in place 0, etcetera.
-	 * We could later try to make a better initial guess.
+	 * We take care to honour the mandatory places, so we first fill only those!
+	 * Then we make a second pass through the places to assign the remaining A's a place
+	 * 
+	 * A nice upgrade would be to make the initial goal state random.
 	 */
 	@Override
 	public void initGoalState() throws Exception {
+		//Prefill with EMPTYPLACE
+		for (int j=0; j<places.length; j++) {
+			places[j] = EMPTYPLACE;			
+		}
+		//Put every A somewhere
+		boolean mandatoryReady = false; //did we fill all mandatory places? not yet
 		if (numberOfAs <= places.length) {
+			int j = 0;  //index for the places array, we intend to traverse it twice
 			for (int i=0; i<numberOfAs; i++) {
-				places[i] = i;
+				if (!mandatoryReady) {
+					//first pass through the places: check mandatory place (scroll if not)
+					while(j<places.length && !PlaceMandatory[j]) {
+						j++;
+					}
+				}
+				if (j == places.length) {
+					//we're past the end of the first pass: all mandatory places are filled
+					mandatoryReady = true;
+					j = 0;  //start second pass
+				}
+				if (mandatoryReady) {
+					//second pass: check NON-mandatory place, scroll if mandatory
+					while(j<places.length && PlaceMandatory[j]) {
+						j++;
+					}
+				}
+				//place j is ok, put i there
+				places[j] = i;
+				j++;
 			}
-			for (int i=numberOfAs; i<places.length; i++) {
-				places[i] = EMPTYPLACE;
+			//in case we run out of A's during the first pass
+			if (!mandatoryReady) {
+				boolean remainingPlacesNotMandatory = true; //no problems found yet
+				for (int k=j; k<places.length; k++) {
+					if (PlaceMandatory[k]) 
+						remainingPlacesNotMandatory = false;
+				}
+				mandatoryReady = remainingPlacesNotMandatory;
 			}
 		}
-		else throw new Exception("Not enough places for all of the As offered by the Bs.");
+		else 
+			throw new Exception("Not enough places for all of the As offered by the Bs.");
+		if (!mandatoryReady) {
+			throw new Exception("Not enough A's to fill all mandatory places required by the B's");
+		}
 	}//end initGoalState
 
 	/* (non-Javadoc)
 	 * @see nl.uva.science.esc.search.problems.StochasticOptimisationProblem#generateRandomMove()
 	 * 
-	 * Choose two places to swap their contents - even if one of them is empty
-	 * If both are empty: short circuit and generate another move.
+	 * Choose two places to swap their contents.
+	 * Reject the move and generate a new one if...:
+	 * - the chosen places are equal OR
+	 * - both places are empty OR
+	 * - one of the places is empty and the other place mandatory to fill
 	 */
 	@Override
 	public void generateRandomMove() {
@@ -288,7 +356,10 @@ public class ManyToOneMatchingProblem
 			swapplace1 = (int) Math.floor(Math.random()*places.length);
 			swapplace2 = (int) Math.floor(Math.random()*places.length);						
 		} while (
-			places[swapplace1] == EMPTYPLACE && places[swapplace2] == EMPTYPLACE
+			swapplace1 == swapplace2
+			|| places[swapplace1] == EMPTYPLACE && places[swapplace2] == EMPTYPLACE
+			|| places[swapplace1] == EMPTYPLACE && PlaceMandatory[swapplace2]
+			|| places[swapplace2] == EMPTYPLACE && PlaceMandatory[swapplace1]
 		);
 	}//end generateRandomMove
 
@@ -322,50 +393,70 @@ public class ManyToOneMatchingProblem
 
 	
 	
-	//methods needed by the deterministic depthfirst techniques
-	//We start with all places empty. In each move a single A is given
-	//a place. The depth of the tree is equal to the number of As and each
-	//A is uniquely linked to a level in the tree, in which he gets his places.
-	//Places are tried in order, from low to high.
-	//When we retreat to an earlier visited node, the same places are open as
-	//on earlier visits, so we are safe in looking for the first higher open 
-	//place. We do need to remember the previous move we did from this node.
+	//methods needed by the deterministic techniques
+	//We start with all places empty. In each move a single place is filled
+	//using an A or - if allowed - EMPTYPLACE. The depth of the tree is equal to the number of available places
+	//Each place is uniquely linked to a level in the tree, in which it gets filled (or not).
+	//A's are tried in order, from low to high.
+	//When we retreat to an earlier visited node, the same A's are unmatched as
+	//on earlier visits, so we are safe in looking for the first higher unmatched 
+	//A. We do need to remember the previous move we did from this node.
 
 	/* (non-Javadoc)
 	 * @see nl.uva.science.esc.search.problems.DeterministicSearchProblem#initState()
 	 * 
 	 * We want to start with an empty places array! It is needed to mark them EMPTY
+	 * Correspondingly, all the A's are initially un-matched
 	 */
 	@Override
 	public void initState() {
 		for (int i=0; i<places.length; i++) {
 			places[i]=EMPTYPLACE;
 		}//end for
+		for (int j=0; j<isAmatched.length; j++) {
+			isAmatched[j]=false;
+		}
 	}//end initState
 
 	/* (non-Javadoc)
 	 * @see nl.uva.science.esc.search.problems.DeterministicSearchProblem#generateDeterministicMove()
 	 * 
-	 * For A-id equal to level: try new place.
-	 * A new place is a place that we didn't yet visit in this same tree-node.
+	 * For places-id equal to level: try a new A (including EMPTYPLACE).
+	 * A new A is an A that we didn't yet visit in this same tree-node.
 	 * For keeping track, the previous move is stored with the node and restored
 	 * by the retreat method together with the rest of the state.
-	 * So given the previous try, we need to find the next higher free place
+	 * So given the previous try, we need to find the next higher unmatched A
 	 * 
-	 * @return success, was a new place found?
+	 * @return success, was a new filling (A or EMPTYPLACE) found?
 	 * @param, level, the level of the tree node for which we make a suggestion
 	 */
 	@Override
 	public boolean generateDeterministicMove(int level) {
-		addableA = level;
-		if (placetofill==NOPLANYET) placetofill = -1;
+		if (level >= places.length)
+			return false;
+		placetofill = level;
+		//Find next unmatched A 
+		if (addableA==NOPLANYET) addableA = -1;
 		do {
-			placetofill++;			
-		} while ( //we need lazy evaluation here...
-				placetofill<places.length && places[placetofill]!=EMPTYPLACE 
+			addableA++;			
+		} while (
+				addableA < numberOfAs && isAmatched[addableA]==true 
 		);
-		boolean rs = (placetofill<places.length)? (true) : (false);
-		return rs;
+		//If all unmatched A's have been tried already then try EMPTYPLACE, if... 
+		// - it's allowed for this place, and we didn't just try it in the previous move
+		// - and there are more than enough levels (=places) left to match all remaining A's
+		if (
+			addableA == numberOfAs 
+			&& addableA != EMPTYPLACE && !PlaceMandatory[placetofill]
+			&& places.length - level > numAToMatch
+		) {
+			addableA = EMPTYPLACE;
+			return true;
+		}
+		else {
+			//we either found an A, or we are at the end of possibilities
+			return (addableA < numberOfAs);
+		}
 	}//end generateDeterministicMove
 	
 	/* (non-Javadoc)
@@ -377,7 +468,7 @@ public class ManyToOneMatchingProblem
 	 */
 	@Override
 	public long getDeltaCostDeterministicMove() {
-		return ABPreferencesT[addableA][BPlaces[placetofill]];
+		return addableA != EMPTYPLACE ? ABPreferencesT[addableA][BPlaces[placetofill]] : 0;
 	}//end getDeltaCostDeterministicMove
 
 	/* (non-Javadoc)
@@ -387,10 +478,14 @@ public class ManyToOneMatchingProblem
 	public Move doForwardMove() {
 		//add the A to the planned place
 		places[placetofill] = addableA;
+		if (addableA != EMPTYPLACE) {
+			isAmatched[addableA] = true;
+			numAToMatch--;			
+		}
 		//package the move for putting it on the stack
 		Move mv = new ManyToOneMatchingMove(addableA, placetofill);
 		//fresh node: we should start without search history
-		placetofill = -1;
+		addableA = -1;
 		return mv;
 	}//end doPlannedMove
 	
@@ -399,7 +494,7 @@ public class ManyToOneMatchingProblem
 	 */
 	@Override
 	public boolean goalTest(int level) {
-		return (level == this.numberOfAs);  //level is size! en moet echt gelijk zijn aan aantal
+		return (level == this.places.length); //all places decided
 	}//end goalTest
 
 	/* (non-Javadoc)
@@ -409,12 +504,16 @@ public class ManyToOneMatchingProblem
 	public void retreatMove(Move m1) {
 		ManyToOneMatchingMove m = (ManyToOneMatchingMove) m1;
 		//the move should fit: it should lead back to the original level
-		assert (this.addableA == m.getLevel()+1); 
+		assert (this.placetofill == m.getLevel()+1); 
 		//restore the move
-		this.addableA = m.getLevel();
-		this.placetofill = m.getPlacetofill();
+		this.addableA = m.getAddableA();
+		this.placetofill = m.getLevel();
 		//do the move in reverse, to restore the original state
 		places[placetofill] = EMPTYPLACE;
+		if (addableA != EMPTYPLACE) {
+			isAmatched[addableA] = false;
+			numAToMatch++;
+		}
 		//note: we keep the history of the node by not deleting placetofill
 	}//end retreatMove
 	

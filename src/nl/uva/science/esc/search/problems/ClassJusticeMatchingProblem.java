@@ -10,7 +10,8 @@ import nl.uva.science.esc.search.views.Parameter;
 /**
  * Each student is to be assigned to a single project.
  * A project can employ one or more students. For each project instance, a
- * different maximum number of students is set.
+ * different maximum number of students is set (and a required minimum can
+ * also be set, or it can be zero).
  * Students indicated preferences for projects, i.e. they indicated a 
  * project as their first, second, third, etc. preference.
  * 
@@ -64,11 +65,12 @@ public class ClassJusticeMatchingProblem extends ManyToOneMatchingProblem
 	 * the more general one: 
 	 *  ** The preferences of the categories of students are transformed **
 	 * @param numberOfAs, how many students to link to projects
+	 * @param BMin, minimum number of students for each project, may be zero
 	 * @param BMax, maximum number of students for each project
 	 * @param ABPreferencesStud, preference of student A for project B
 	 */
 	public ClassJusticeMatchingProblem(
-			int numberOfAs, int[] BMax, int defaultPref,
+			int numberOfAs, int[] BMin, int[] BMax, int defaultPref,
 			int[][] ABPreferencesStud,
 			PreferenceTransformation[] transforms, int[] ACategory,  
 			String transformprefs, int studPrefCutoff
@@ -80,7 +82,7 @@ public class ClassJusticeMatchingProblem extends ManyToOneMatchingProblem
 		this.studPrefCutoff = studPrefCutoff;
 		this.ABPreferences = calcABPreferences(); //protected property of base class
 		this.ABPreferencesT = this.transformPrefs(ABPreferences, transformprefs);
-		initPlacesAndPlans(BMax);     //protected method in base class
+		initPlacesAndPlans(BMin, BMax);     //protected method in base class
 		this.numberOfAs = numberOfAs;  //protected property of base class
 		this.numCategories = Max(this.ACategory)+1;
 	}//end constructor
@@ -106,7 +108,7 @@ public class ClassJusticeMatchingProblem extends ManyToOneMatchingProblem
 		this.studPrefCutoff = Integer.parseInt( parametervalues[2] );
 		this.ABPreferences = calcABPreferences(); //protected property of base class
 		this.ABPreferencesT = this.transformPrefs(ABPreferences, parametervalues[1]);
-		initPlacesAndPlans( sc.getBMax() );      //protected method in base class
+		initPlacesAndPlans( sc.getBMin(), sc.getBMax() );      //protected method in base class
 		this.numberOfAs = sc.getnumberOfAs();    //protected property of base class
 		this.numCategories = Max(this.ACategory)+1;
 	}//end StudentProjectMatchingProblemFactory

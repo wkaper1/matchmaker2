@@ -19,11 +19,16 @@ public class ManyToOneMatchingState implements State {
 	
 	//the state of a ManyToOneMatchingProblem:
 	private int[] places;
+	private boolean[] isAmatched;
+	private int numAToMatch;
+	
 	//reference to live mother Problem object, for delegating the reporting
 	private ManyToOneMatchingProblem p;  //it might still be a subclass!
 	
-	public ManyToOneMatchingState(int[] places, ManyToOneMatchingProblem p) {
+	public ManyToOneMatchingState(int[] places, boolean[] isAmatched, int numAToMatch, ManyToOneMatchingProblem p) {
 		this.places = places;
+		this.isAmatched = isAmatched;
+		this.numAToMatch = numAToMatch;
 		this.p = p;
 	}//end constructor
 	
@@ -31,14 +36,24 @@ public class ManyToOneMatchingState implements State {
 		return places;
 	}//end getPlaces
 	
+	public boolean[] isAmatched() {
+		return isAmatched;
+	}//end isAmatched
+	
+	public int getNumAToMatch() {
+		return numAToMatch;
+	}
+	
 	/* (non-Javadoc)
 	 * @see nl.uva.science.esc.search.problems.State#stateClone()
 	 */
 	@Override
 	public State stateClone() {
-		int[] copy = new int[places.length];
-		System.arraycopy(places, 0, copy, 0, places.length);
-		return new ManyToOneMatchingState(copy, p);
+		int[] placesCp = new int[places.length];
+		boolean[] isAmatchedCp = new boolean[isAmatched.length];
+		System.arraycopy(places, 0, placesCp, 0, places.length);
+		System.arraycopy(isAmatched, 0, isAmatchedCp, 0, isAmatched.length);
+		return new ManyToOneMatchingState(placesCp, isAmatchedCp, numAToMatch, p);
 	}//end stateClone
 	
 	//Following 4 State-reports are all delegated to ManyToOneMatchingProblem

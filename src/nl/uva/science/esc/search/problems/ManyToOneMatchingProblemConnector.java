@@ -37,6 +37,10 @@ public class ManyToOneMatchingProblemConnector extends ProblemConnector {
 		return new int[] {}; //ToDo !
 	}//end getBMax
 	
+	public int[] getBMin() {
+		return new int[] {}; //ToDo!
+	}
+	
 	public int[][] getABPreferences() {
 		return new int[][] {}; //ToDo !
 	}//end getABPreferencesStud

@@ -33,7 +33,7 @@ public class TestManyToOneMatchingRealdata {
 		int[][]ABPreferences = getABPreferences();
 		//choose a problem and a technique
 		ManyToOneMatchingProblem p = new ManyToOneMatchingProblem(
-			BMax, ABPreferences, tranformation, numstudents
+			BMax, BMax, ABPreferences, tranformation, numstudents      //TODO: BMin
 		) ;
 		//tweak parameters in the call below
 		SimulatedAnnealingTechnique t = new SimulatedAnnealingTechnique(
