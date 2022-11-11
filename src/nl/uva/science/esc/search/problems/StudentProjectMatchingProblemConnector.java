@@ -73,6 +73,7 @@ public class StudentProjectMatchingProblemConnector extends ProblemConnector {
 	private int[][] ABPreferencesStud;
 	private int[][] ABPreferencesProj;
 	private int[] ACategory;
+	private boolean HasPlacesShortage; //shortage allowed && actual shortage => bogus project added?
 	//translation arrays that we need to keep between reading and writing
 	private String[] StudId;
 	private String[] ProjId;
@@ -226,6 +227,7 @@ public class StudentProjectMatchingProblemConnector extends ProblemConnector {
 			throw new InvalidProblemException("The number of projects, or the  number of available places, does not fit the declared value at the bottom of the file.");
 		}//end if
 		if (placesShortage) { 
+			HasPlacesShortage = true;
 			//add the bogus project, offering just the missing places
 			int i = pp.length();
 			ProjId[i] = BOGUSPROJECTID;
@@ -313,6 +315,10 @@ public class StudentProjectMatchingProblemConnector extends ProblemConnector {
 	public int[] getACategory() {
 		return ACategory;
 	}//end getACategory
+	
+	public boolean hasPlacesShortage() {
+		return HasPlacesShortage;
+	}
 	
 	
 	//setters for the solution before we can start writing...!
