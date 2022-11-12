@@ -25,7 +25,7 @@ import nl.uva.science.esc.search.views.Parameter;
  * Non-explicit preferences are temporarily indicated by zeroes in the prefs 
  * arrays.
  * If there's a shortage of places then some students will not be placed at
- * all, i.e. they will be placed at a bogus project. A separate penalty is
+ * all, i.e. they will be placed at the bogus project. A separate penalty is
  * used for this: the nonPlacementPenalty. 
  * 
  * The operator of this software can choose to disregard the higher numbered
@@ -33,11 +33,11 @@ import nl.uva.science.esc.search.views.Parameter;
  * by choosing two 'cutoff' values. If the preference number that either the
  * student or the project assigned to the other party is equal or higher than
  * the respective cutoff value, the preference of this student-project pair is
- * set to the high default that also applies to unmentioned pairs.
+ * set to the nonChosenPlacePenalty, that also applies to unmentioned pairs.
  * We will have a 'studentprefcutoff', as well as a 'projectprefcutoff' parameter
  * for this purpose.
  * 
- * After this weighting, and default assigning, the problem is reduced to 
+ * After this weighting, and penalty assigning, the problem is reduced to 
  * a ManyToOneMatchingProblem
  * 
  * This class's knowledge of the un-reduced problem is also used in reporting
@@ -56,13 +56,13 @@ public class StudentProjectMatchingProblem extends ManyToOneMatchingProblem
 	private int studPrefCutoff; //cutoff value for preferences stated by students
 	private int projPrefCutoff; //cutoff value for preferences stated by projects
 	private int nonChosenPlacePenalty;   //Preference for the nonmentioned student-project pairs
-	private int nonPlacementPenalty;     //Preference for not placing the student at all
 	  //as well as for pairs where one of the two preferences is above the cutoff!
+	private int nonPlacementPenalty;     //Preference for not placing the student at all
 	private int[][] ABPreferencesStud;   //Preference of student A for project B
 	private int[][] ABPreferencesProj;	 //Preference of project B for student A
 
 	/**
-	 * Constructor does preprosessing to turn the specific problem into
+	 * Constructor does preprocessing to turn the specific problem into
 	 * the more general one: ** The preferences of both parties are weighted **
 	 * @param numberOfAs, how many students to link to projects
 	 * @param WStud, weight for students preferences
@@ -73,6 +73,7 @@ public class StudentProjectMatchingProblem extends ManyToOneMatchingProblem
 	 * @param ABPreferencesProj, preference of project B for student A
 	 * @param nonChosenPlacePenalty, Preference for the nonmentioned student-project pairs
 	 * @param nonPlacementPenalty, Preference for not placing the student at all
+	 * @param hasPlacesShortage, too many students for the available places => last project given is bogus
 	 * @param transformprefs, name of transformation to perform on preference numbers
 	 * @param studPrefCutoff, cutoff value for preferences stated by students
 	 * @param projPrefCutoff, cutoff value for preferences stated by projects
@@ -123,9 +124,9 @@ public class StudentProjectMatchingProblem extends ManyToOneMatchingProblem
 	
 	/**
 	 * Do the weighting of student-stated and project-stated preferences
-	 * Assign a default (high, unwanted) preference to all nonmentioned pairs
-	 * as well as to the pairs where one of both stated preferences is equal or
-	 * above the respective (operator-chosen) cutoff value
+	 * Assign a penalty to all nonmentioned pairs as well as to the pairs where one of both 
+	 * stated preferences is equal or above the respective (operator-chosen) cutoff value.
+	 * Assign a separate penalty for placement on the bogus project (i.e. not placed at all)
 	 * @return ABPreferences
 	 */
 	private int[][] calcABPreferences(boolean placesShortage) {

@@ -23,6 +23,10 @@ public class LinearTransformation implements PreferenceTransformation {
 		this.nonChosenPlacePenalty = nonChosenPlacePenalty;
 		this.nonPlacementPenalty = nonPlacementPenalty;
 	}
+	
+	public LinearTransformation(int steepness, int intercept, int nonChosenPlacePenalty) {
+		this(steepness, intercept, nonChosenPlacePenalty, nonChosenPlacePenalty);
+	}
 
 	@Override
 	public int Transform(int preference) {

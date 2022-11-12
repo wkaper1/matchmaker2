@@ -17,9 +17,12 @@ import nl.uva.science.esc.search.views.Parameter;
  * 
  * Each student assigns preferences explicitly only for few of the possible 
  * projects: they are the high preferences. For all non-mentioned pairs an equal 
- * and very low default preference (high cost) is assumed.
+ * and very low default preference, high cost, is assumed: 
+ *    the nonChosenPlacePenalty
  * Non-explicit preferences are temporarily indicated by zeroes in the prefs 
  * arrays.
+ * If PlacesShortage is allowed then it can happen that a student is not placed
+ * at all. We have a separate penalty for that: the nonPlacementPenalty.
  * 
  * The students are categorized into two or more categories, e.g. "first time" 
  * students, and "retry" students.
@@ -30,7 +33,10 @@ import nl.uva.science.esc.search.views.Parameter;
  * the 5th preference of an "first time" student. The motivation could be that 
  * we want to re-distribute the "tail" of the less wanted preferences away from 
  * the first time students, cause everybody deserves a great first time. So its
- * really not class justice at all! (in the example). 
+ * really not class justice at all! (in the example).
+ * The two penalties can also be specified separately for the various categories
+ * of students. Usecase: the double bachelor psychobiology + psychology. They
+ * have a right to be placed in psychology projects, while others haven't. 
  * 
  * The operator of this software can choose to disregard the higher numbered
  * (less desirable) explicit preferences of students, by choosing a 'cutoff' 
@@ -53,34 +59,36 @@ public class ClassJusticeMatchingProblem extends ManyToOneMatchingProblem
 	//preferences above the respective cutoff will be treated in the same way
 	//as nonmentioned preferences
 	private int studPrefCutoff; //cutoff value for preferences stated by students
-	private int defaultPref;             //Preference for all nonmentioned pairs
-	  //as well as for pairs where the students preference is above the cutoff!
 	private PreferenceTransformation[] transforms;
 	private int[] ACategory;    //for each A his category number (0, 1, 2,...)
 	private int[][] ABPreferencesStud;   //Preference of student A for project B
 	private int numCategories;  //how many categories?
 
 	/**
-	 * Constructor does preprosessing to turn the specific problem into
+	 * Constructor does preprocessing to turn the specific problem into
 	 * the more general one: 
 	 *  ** The preferences of the categories of students are transformed **
 	 * @param numberOfAs, how many students to link to projects
 	 * @param BMin, minimum number of students for each project, may be zero
 	 * @param BMax, maximum number of students for each project
 	 * @param ABPreferencesStud, preference of student A for project B
+	 * @param transforms, array of transformations, one for each student category
+	 * @param ACategory, array of integer category symbols, one for each student, same length and ordering as ABPreferencesStud
+	 * @param hasPlacesShortage, too many students for the available places => last project is bogus
+	 * @param transformprefs, name of transformation to perform on preference numbers
+	 * @param studPrefCutoff, cutoff value for preferences stated by students
 	 */
 	public ClassJusticeMatchingProblem(
-			int numberOfAs, int[] BMin, int[] BMax, int defaultPref,
+			int numberOfAs, int[] BMin, int[] BMax,
 			int[][] ABPreferencesStud,
-			PreferenceTransformation[] transforms, int[] ACategory,  
+			PreferenceTransformation[] transforms, int[] ACategory, boolean hasPlacesShortage, 
 			String transformprefs, int studPrefCutoff
 	) {
-		this.defaultPref = defaultPref;
 		this.ABPreferencesStud = ABPreferencesStud;
 		this.transforms = transforms;
 		this.ACategory = ACategory;
 		this.studPrefCutoff = studPrefCutoff;
-		this.ABPreferences = calcABPreferences(); //protected property of base class
+		this.ABPreferences = calcABPreferences(hasPlacesShortage); //protected property of base class
 		this.ABPreferencesT = this.transformPrefs(ABPreferences, transformprefs);
 		initPlacesAndPlans(BMin, BMax);     //protected method in base class
 		this.numberOfAs = numberOfAs;  //protected property of base class
@@ -101,13 +109,12 @@ public class ClassJusticeMatchingProblem extends ManyToOneMatchingProblem
 		ProblemConnector c, String[] parametervalues, PreferenceTransformation[] transforms
 	) {
 		StudentProjectMatchingProblemConnector sc = (StudentProjectMatchingProblemConnector) c;
-		this.defaultPref = Integer.parseInt( parametervalues[0] );
 		this.ABPreferencesStud = sc.getABPreferencesStud();
 		this.transforms = transforms;
 		this.ACategory = sc.getACategory();
-		this.studPrefCutoff = Integer.parseInt( parametervalues[2] );
-		this.ABPreferences = calcABPreferences(); //protected property of base class
-		this.ABPreferencesT = this.transformPrefs(ABPreferences, parametervalues[1]);
+		this.studPrefCutoff = Integer.parseInt( parametervalues[1] );
+		this.ABPreferences = calcABPreferences(sc.hasPlacesShortage()); //protected property of base class
+		this.ABPreferencesT = this.transformPrefs(ABPreferences, parametervalues[0]);
 		initPlacesAndPlans( sc.getBMin(), sc.getBMax() );      //protected method in base class
 		this.numberOfAs = sc.getnumberOfAs();    //protected property of base class
 		this.numCategories = Max(this.ACategory)+1;
@@ -116,12 +123,12 @@ public class ClassJusticeMatchingProblem extends ManyToOneMatchingProblem
 	/**
 	 * Transform the preference numbers of the students, each according to its 
 	 * category.
-	 * Assign a default (high, unwanted) preference to all nonmentioned pairs
-	 * as well as to the pairs where one of both stated preferences is equal or
-	 * above the respective (operator-chosen) cutoff value
+	 * Assign a penalty to all nonmentioned pairs as well as to the pairs where one of both 
+	 * stated preferences is equal or above the respective (operator-chosen) cutoff value.
+	 * Assign a separate penalty for placement on the bogus project (i.e. not placed at all)
 	 * @return ABPreferences
 	 */
-	private int[][] calcABPreferences() {
+	private int[][] calcABPreferences(boolean placesShortage) {
 		int ABPreferences[][] = new int[ABPreferencesStud.length][ABPreferencesStud[0].length];
 		for (int i=0; i<ABPreferences.length; i++) {
 			for (int j=0; j<ABPreferences[0].length; j++) {
@@ -129,11 +136,18 @@ public class ClassJusticeMatchingProblem extends ManyToOneMatchingProblem
 					ABPreferencesStud[i][j]==0 ||
 					ABPreferencesStud[i][j]>=studPrefCutoff 
 				) {
-					ABPreferences[i][j] = defaultPref; 
+					if (placesShortage && j == ABPreferences[0].length - 1) {
+						//student is not placed (placed on bogusproject)
+						ABPreferences[i][j] = transforms[ACategory[i]].NonPlacementPenalty();
+					}
+					else {
+						//the student did not choose this project, or the preference is above the cutoff: ignore
+						ABPreferences[i][j] = transforms[ACategory[i]].NonChosenPlacePenalty(); 						
+					}
 				}
 				else {
-					ABPreferences[i][j] = transforms[ACategory[i]]
-							.Transform( ABPreferencesStud[i][j] );					
+					//explicit preferences were assigned by student, and are used
+					ABPreferences[i][j] = transforms[ACategory[i]].Transform( ABPreferencesStud[i][j] );					
 				}//end if
 			}//next j
 		}//next i
@@ -278,8 +292,7 @@ public class ClassJusticeMatchingProblem extends ManyToOneMatchingProblem
 	 * The below is just a shortened copy from StudentProjectMachingProblem
 	 */
 	public static Parameter[] advertiseParameters() {
-		return new Parameter[] {
-				new Parameter("notchosenpenalty", true, InputType.POSITIVEINT), 
+		return new Parameter[] { 
 				new Parameter("transformpreferences", true, InputType.STRING), 
 				//This 4e inputtype is not really good.
 				//It's really an enum type whose possible values should be
