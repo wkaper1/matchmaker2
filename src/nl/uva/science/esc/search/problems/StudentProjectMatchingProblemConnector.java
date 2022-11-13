@@ -37,6 +37,7 @@ import org.json.*;
  *   { String studentid => { String projectid => 
  *   			[ int prefStud, int prefProj ] 
  *   }}
+ * - bool allowPlacesShortage, is it a valid problem numberOfStudents > numberOfPlaces ?
  * - int numberOfProjects, number of projectids in projectPlaces
  * - int numberOfPlaces, sum of numbers of places in projectPlaces
  * - int numberOfStudents, number of different studentids in studentProjectPreferences
@@ -46,6 +47,20 @@ import org.json.*;
  * 
  * The JSON problem solution hash has this structure:
  * { String studentid : String projectid }
+ * 
+ * The StudentProjectMatchingProblem works by starting from an initial situation where all
+ * students are given a place. This is not possible when numberOfStudents > numberOfPlaces.
+ * But this connector can easily allow it by creating 1 extra bogus project that has just 
+ * the missing places. This project by necessity was chosen by none. The matchmaking will
+ * proceed as usual, and the bogus-places will remain filled, resulting in a minimum 
+ * penalty that cannot be avoided.
+ * However, the distribution of students will be such that students that chose impopular
+ * projects always get what they want while students choosing popular projects have a
+ * higher (but fairly distributed) chance of ending up in one of the bogus places.
+ * In reporting the solution the bogus project is simply omitted by this connector.
+ * 
+ * The underlying Problem-class does not know that 1 project is bogus, so its reporting
+ * will involve that bogus project! It will be recognisable by a suitably weird ID.
  * 
  * @author kaper
  *
@@ -66,7 +81,9 @@ public class StudentProjectMatchingProblemConnector extends ProblemConnector {
 		//see showStateDetails: it gives the same data for viewing in GUI.
 	//webservice control data (see also parent class)
 	private final String WEBSERVICEBASEURL="https://www.science.uva.nl/onderwijs/database/stages/modules/services/matching2/";
-	private final String PROBLEMIDNAME = "vak_id"; 
+	private final String PROBLEMIDNAME = "vak_id";
+	//other config data
+	private final String BOGUSPROJECTID = "99999";
 
 	/**
 	 * Constructor 
@@ -177,18 +194,20 @@ public class StudentProjectMatchingProblemConnector extends ProblemConnector {
 	 * @see nl.uva.science.esc.search.problems.ProblemConnector#interpretJsonProblem(org.json.JSONObject)
 	 */
 	protected void interpretJsonProblem(JSONObject json) throws InvalidProblemException {
-		//read the checking numbers
+		//read the checking numbers, and other simple problem settings
 		int numberOfProjects = json.getInt("numberOfProjects");
 		int numberOfPlaces = json.getInt("numberOfPlaces");
 		numberOfAs = json.getInt("numberOfStudents");
-		if (numberOfAs > numberOfPlaces) {
-			throw new InvalidProblemException("The number of students, as declared at the bottom of the file, is larger than the number of available project-places.");
+		boolean allowPlacesShortage = json.getBoolean("allowPlacesShortage");
+		boolean placesShortage = (numberOfAs > numberOfPlaces);
+		if (placesShortage && !allowPlacesShortage) {
+			throw new InvalidProblemException("The number of students, as declared at the bottom of the file, is larger than the number of available project-places, while it was not allowed.");
 		}
 		//read projectPlaces and create BMax plus ProjId translation array
 		JSONObject pp = json.getJSONObject("projectPlaces");
-		BMin = new int[pp.length()];
-		BMax = new int[pp.length()];
-		ProjId = new String[pp.length()];
+		BMin = new int[placesShortage ? pp.length() + 1 : pp.length()]; //add 1 bogus project if needed
+		BMax = new int[placesShortage ? pp.length() + 1 : pp.length()];
+		ProjId = new String[placesShortage ? pp.length() + 1 : pp.length()];
 		Map<String, Integer> projNr = new HashMap<String, Integer>(); //reverse of ProjId[]
 		Iterator<String> k = pp.keys();
 		int sumplaces = 0;
@@ -205,7 +224,16 @@ public class StudentProjectMatchingProblemConnector extends ProblemConnector {
 		//checks
 		if (!(numberOfProjects==pp.length() && numberOfPlaces==sumplaces)) {
 			throw new InvalidProblemException("The number of projects, or the  number of available places, does not fit the declared value at the bottom of the file.");
-		}//end if	
+		}//end if
+		if (placesShortage) { 
+			//add the bogus project, offering just the missing places
+			int i = pp.length();
+			ProjId[i] = BOGUSPROJECTID;
+			BMin[i] = 0;
+			BMax[i] = numberOfAs - numberOfPlaces;
+			projNr.put(ProjId[i], Integer.valueOf(i)); //treat it like a normal project unless noted otherwise
+			sumplaces += BMax[i];
+		}
 		//read studentProjectPreferences and studentCategory
 		//create ABPreferencesStud and -Proj, ACategory, plus StudId translation array
 		JSONObject spp = json.getJSONObject("studentProjectPreferences");
@@ -317,16 +345,19 @@ public class StudentProjectMatchingProblemConnector extends ProblemConnector {
 			String projid = this.ProjId[Integer.parseInt( this.BAMatches[i][0] )];
 			String studid = "0"; //default in case place is empty
 			if (
-				Integer.parseInt( this.BAMatches[i][1] ) != 
-				ManyToOneMatchingProblem.EMPTYPLACE
+				Integer.parseInt( this.BAMatches[i][1] ) != ManyToOneMatchingProblem.EMPTYPLACE
 			) {
-				//translate student id, and store it in json
+				//translate student id
 				studid = this.StudId[Integer.parseInt( this.BAMatches[i][1] )];
-				json.put(studid, projid); //student-id is key
+				if (projid != BOGUSPROJECTID) {
+					//store both ids in the json
+					json.put(studid, projid); //student-id is key					
+				}
 			}
 			//We can't store the "0" for empty places because: not unique
 			//but we can show them on the console.
 			//If everything works well it is redundant information, however.
+			//Also the bogus project appears below while NOT being included in the json.
 			if (showtranslation) {
 				System.out.println(projid + " " + studid + " " + this.BAMatches[i][2] + 
 						" " + 

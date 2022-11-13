@@ -16,8 +16,8 @@ import nl.uva.science.esc.search.techniques.SimulatedAnnealingTechnique;
  */
 public class TestStudentProjectMatchingPlusConnectorRealData {
 	//configure the input and output file here
-	public static final String problemPath = "D:\\matching\\problem.txt";
-	public static final String solutionPath = "D:\\matching\\solution.txt";
+	public static final String problemPath = "c:\\matching\\problem.txt";
+	public static final String solutionPath = "c:\\matching\\solution.txt";
 	
 	//problem parameters that we later want to get from the GUI
 	public static final String studentPrefWeight = "1";
@@ -30,9 +30,9 @@ public class TestStudentProjectMatchingPlusConnectorRealData {
 	public static final String projectPrefCutoff = "3";
 	
 	//technique parameters
-	public static final double initialTemperature = 70000;
+	public static final double initialTemperature = 50000;
 	public static final int waittime = 100000;
-	public static final float temperaturedrop = (float) 0.98;
+	public static final float temperaturedrop = (float) 0.997;
 	public static final double closetozerotemp = 0.1;
 	public static final int maxtriesinvain = 100000;
 	
