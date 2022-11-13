@@ -17,8 +17,8 @@ import nl.uva.science.esc.search.techniques.SimulatedAnnealingTechnique;
  */
 public class TestClassJusticeMatchingForFirsttimersVersusRetryStudents {
 	//configure the input and output file here
-	public static final String problemPath = "D:\\matching\\problem.txt";
-	public static final String solutionPath = "D:\\matching\\solution.txt";
+	public static final String problemPath = "C:\\matching\\problem.txt";
+	public static final String solutionPath = "C:\\matching\\solution.txt";
 	
 	//problem parameters that we later want to get from the GUI
 	//Transformation to do on all preference values, after the per class transformations

@@ -18,26 +18,27 @@ import nl.uva.science.esc.search.techniques.SimulatedAnnealingTechnique;
  */
 public class TestClassJusticeMatchingForGuaranteedPlacement {
 	//configure the input and output file here
-	public static final String problemPath = "D:\\matching\\problem.txt";
-	public static final String solutionPath = "D:\\matching\\solution.txt";
+	public static final String problemPath = "C:\\matching\\problem.txt";
+	public static final String solutionPath = "C:\\matching\\solution.txt";
 	
 	//problem parameters that we later want to get from the GUI
 	//Transformation to do on all preference values, after the per class transformations
 	public static final String tranformation2 = "identity";
 	//Cutoff values for student-stated and project-stated preferences
-	public static final String studentPrefCutoff = "11";
+	public static final String studentPrefCutoff = "4";
 	
 	//Separate transformations for two categories: guaranteed versus non-guaranteed placement
-	public static final int DEFAULT_PREF = 10000;  //preference given to non-chosen projects
-	public static final int NON_PLACEMENT_PREF = 10000; //non-placement for normal people
+	public static final int DEFAULT_PREF = 10000;                  //preference given to non-chosen projects
+	public static final int DEFAULT_PREF_FOR_GUARANTEEDS = 100000;  //same, for people that have guaranteed placement
+	public static final int NON_PLACEMENT_PREF = 10000;            //non-placement for normal people
 	public static final int NON_PLACEMENT_PREF_FOR_GUARANTEEDS = 100000; //non-placement for people that have guaranteed placement
 	
 	
 	//technique parameters
-	public static final double initialTemperature = 10;
+	public static final double initialTemperature = 100000;
 	public static final int waittime = 100000;
-	public static final float temperaturedrop = (float) 0.9997;
-	public static final double closetozerotemp = 0.4;
+	public static final float temperaturedrop = (float) 0.995;
+	public static final double closetozerotemp = 0.25;
 	public static final int maxtriesinvain = 100000;
 	
 	//reporting parameters
@@ -55,7 +56,7 @@ public class TestClassJusticeMatchingForGuaranteedPlacement {
 		//create the two transformation
 		PreferenceTransformation[] transf = new PreferenceTransformation[2];
 		transf[0] = new LinearTransformation(1, 0, DEFAULT_PREF, NON_PLACEMENT_PREF);
-		transf[1] = new LinearTransformation(1, 0, DEFAULT_PREF, NON_PLACEMENT_PREF_FOR_GUARANTEEDS);
+		transf[1] = new LinearTransformation(1, 0, DEFAULT_PREF_FOR_GUARANTEEDS, NON_PLACEMENT_PREF_FOR_GUARANTEEDS);
 		//make problem object
 		ClassJusticeMatchingProblem p = new ClassJusticeMatchingProblem(
 			pc, 

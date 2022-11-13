@@ -27,11 +27,11 @@ public class TestStudentProjectMatchingPlusConnectorRealData {
 	//Transformation to do on all preference values
 	public static final String tranformation = "identity";
 	//Cutoff values for student-stated and project-stated preferences
-	public static final String studentPrefCutoff = "4";
+	public static final String studentPrefCutoff = "9";
 	public static final String projectPrefCutoff = "3";
 	
 	//technique parameters
-	public static final double initialTemperature = 50000;
+	public static final double initialTemperature = 5;
 	public static final int waittime = 100000;
 	public static final float temperaturedrop = (float) 0.997;
 	public static final double closetozerotemp = 0.1;
