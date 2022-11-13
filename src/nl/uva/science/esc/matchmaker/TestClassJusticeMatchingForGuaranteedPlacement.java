@@ -8,38 +8,37 @@ import nl.uva.science.esc.search.techniques.SimulatedAnnealingTechnique;
 
 /**
  * Test for ClassJusticetMatchingProblem, including its ProblemConnector
- * using data which we read from a file.
- * Also, the solution will be written to a file.
+ * using data which we read from a file. Also, the solution will be written to a file.
+ * 
+ * This script is specific to the usecase where some students have the privilege of
+ * guaranteed placement in case of PlacesShortage. No other priviliges, so no higher
+ * chance to end up at their first choice (not even to end up on one of their choices?).
+ * Non-placement is not allowed so does not need to be dealt with.
  * @author kaper
  */
-public class TestClassJusticeMatchingRealData {
+public class TestClassJusticeMatchingForGuaranteedPlacement {
 	//configure the input and output file here
-	public static final String problemPath = "D:\\matching\\problem.txt";
-	public static final String solutionPath = "D:\\matching\\solution.txt";
+	public static final String problemPath = "C:\\matching\\problem.txt";
+	public static final String solutionPath = "C:\\matching\\solution.txt";
 	
 	//problem parameters that we later want to get from the GUI
-	public static final String DEFAULT_PREF = "10000";  //pref. given to non-chosen projects
 	//Transformation to do on all preference values, after the per class transformations
 	public static final String tranformation2 = "identity";
 	//Cutoff values for student-stated and project-stated preferences
-	public static final String studentPrefCutoff = "11";
+	public static final String studentPrefCutoff = "4";
 	
-	//Separate transformations for two categories: first-time and return students
-	//Preference multipliers, translations
-	//Scheme 1: distribute the low-preference tail away from firsttimers
-	public static final int firstTimeMultiplier = 7;
-	public static final int returnMultiplier = 1;
-	public static final int returnTranslation = 6;
-	//Scheme 2: invert the scale, e.g. to 'punish' students that didn't make the required nr of choices 
-//	public static final int firstTimeMultiplier = 1;  //it's NOT a great idea!
-//	public static final int returnMultiplier = -1;
-//	public static final int returnTranslation = 10;
+	//Separate transformations for two categories: guaranteed versus non-guaranteed placement
+	public static final int DEFAULT_PREF = 10000;                  //preference given to non-chosen projects
+	public static final int DEFAULT_PREF_FOR_GUARANTEEDS = 100000;  //same, for people that have guaranteed placement
+	public static final int NON_PLACEMENT_PREF = 10000;            //non-placement for normal people
+	public static final int NON_PLACEMENT_PREF_FOR_GUARANTEEDS = 100000; //non-placement for people that have guaranteed placement
+	
 	
 	//technique parameters
-	public static final double initialTemperature = 10;
+	public static final double initialTemperature = 100000;
 	public static final int waittime = 100000;
-	public static final float temperaturedrop = (float) 0.9997;
-	public static final double closetozerotemp = 0.4;
+	public static final float temperaturedrop = (float) 0.995;
+	public static final double closetozerotemp = 0.25;
 	public static final int maxtriesinvain = 100000;
 	
 	//reporting parameters
@@ -56,12 +55,12 @@ public class TestClassJusticeMatchingRealData {
 		pc.getProblemFromFile(problemPath);
 		//create the two transformation
 		PreferenceTransformation[] transf = new PreferenceTransformation[2];
-		transf[0] = new LinearTransformation(firstTimeMultiplier, 0);
-		transf[1] = new LinearTransformation(returnMultiplier, returnTranslation);
+		transf[0] = new LinearTransformation(1, 0, DEFAULT_PREF, NON_PLACEMENT_PREF);
+		transf[1] = new LinearTransformation(1, 0, DEFAULT_PREF_FOR_GUARANTEEDS, NON_PLACEMENT_PREF_FOR_GUARANTEEDS);
 		//make problem object
 		ClassJusticeMatchingProblem p = new ClassJusticeMatchingProblem(
 			pc, 
-			new String[] { DEFAULT_PREF, tranformation2, studentPrefCutoff },
+			new String[] { tranformation2, studentPrefCutoff },
 			transf
 		);
 		//tweak technique parameters in the call below

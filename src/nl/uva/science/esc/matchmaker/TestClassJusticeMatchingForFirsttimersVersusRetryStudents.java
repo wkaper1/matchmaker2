@@ -1,40 +1,49 @@
 package nl.uva.science.esc.matchmaker;
 
 import nl.uva.science.esc.search.problems.ManyToOneMatchingState;
-import nl.uva.science.esc.search.problems.StudentProjectMatchingProblem;
+import nl.uva.science.esc.search.problems.ClassJusticeMatchingProblem;
+import nl.uva.science.esc.search.problems.transf.*;
 import nl.uva.science.esc.search.problems.StudentProjectMatchingProblemConnector;
 import nl.uva.science.esc.search.techniques.SimulatedAnnealingTechnique;
 
 /**
- * Test for StudentProjectMatchingProblem, including its ProblemConnector
- * using data which we read from a file.
- * Also, the solution will be written to a file.
- * So we only test the file-feature, not the webservice or mock feature of the
- * ProblemConnector. However this includes a test of the JSONObject reading and
- * writing that the webservice feature also will be using. 
+ * Test for ClassJusticetMatchingProblem, including its ProblemConnector
+ * using data which we read from a file. Also, the solution will be written to a file.
+ * 
+ * This script is specific to the usecase where firsttimers get a lower chance of
+ * ending up in the low-preferences tail, compared to retry students.
+ * Non-placement is not allowed so does not need to be dealt with.
  * @author kaper
  */
-public class TestStudentProjectMatchingPlusConnectorRealData {
+public class TestClassJusticeMatchingForFirsttimersVersusRetryStudents {
 	//configure the input and output file here
-	public static final String problemPath = "c:\\matching\\problem.txt";
-	public static final String solutionPath = "c:\\matching\\solution.txt";
+	public static final String problemPath = "C:\\matching\\problem.txt";
+	public static final String solutionPath = "C:\\matching\\solution.txt";
 	
 	//problem parameters that we later want to get from the GUI
-	public static final String studentPrefWeight = "1";
-	public static final String projectPrefWeight = "0";
-	public static final String DEFAULT_PREF = "10000";    //pref. given to non-chosen projects
-	public static final String NOT_PLACED_PREF = "20000"; //pref. for not being placed at all - used in case of PlacesShortage
-	//Transformation to do on all preference values
-	public static final String tranformation = "identity";
+	//Transformation to do on all preference values, after the per class transformations
+	public static final String tranformation2 = "identity";
 	//Cutoff values for student-stated and project-stated preferences
-	public static final String studentPrefCutoff = "9";
-	public static final String projectPrefCutoff = "3";
+	public static final String studentPrefCutoff = "11";
+	
+	//Separate transformations for two categories: first-time and return students
+	//Preference multipliers, translations
+	//Scheme 1: distribute the low-preference tail away from firsttimers
+	public static final int firstTimeMultiplier = 7;
+	public static final int returnMultiplier = 1;
+	public static final int returnTranslation = 6;
+	public static final int DEFAULT_PREF = 10000;  //pref. given to non-chosen projects
+	//Scheme 2: invert the scale, e.g. to 'punish' students that didn't make the required nr of choices 
+//	public static final int firstTimeMultiplier = 1;  //it's NOT a great idea!
+//	public static final int returnMultiplier = -1;
+//	public static final int returnTranslation = 10;
+//	public static final int DEFAULT_PREF = 10000;
 	
 	//technique parameters
-	public static final double initialTemperature = 5;
+	public static final double initialTemperature = 10;
 	public static final int waittime = 100000;
-	public static final float temperaturedrop = (float) 0.997;
-	public static final double closetozerotemp = 0.1;
+	public static final float temperaturedrop = (float) 0.9997;
+	public static final double closetozerotemp = 0.4;
 	public static final int maxtriesinvain = 100000;
 	
 	//reporting parameters
@@ -49,12 +58,15 @@ public class TestStudentProjectMatchingPlusConnectorRealData {
 		//read problem from file
 		StudentProjectMatchingProblemConnector pc = new StudentProjectMatchingProblemConnector();
 		pc.getProblemFromFile(problemPath);
+		//create the two transformation
+		PreferenceTransformation[] transf = new PreferenceTransformation[2];
+		transf[0] = new LinearTransformation(firstTimeMultiplier, 0, DEFAULT_PREF);
+		transf[1] = new LinearTransformation(returnMultiplier, returnTranslation, DEFAULT_PREF);
 		//make problem object
-		StudentProjectMatchingProblem p = new StudentProjectMatchingProblem(
-			pc, new String[] {
-				studentPrefWeight, projectPrefWeight, DEFAULT_PREF, tranformation,
-				studentPrefCutoff, projectPrefCutoff, NOT_PLACED_PREF
-			}
+		ClassJusticeMatchingProblem p = new ClassJusticeMatchingProblem(
+			pc, 
+			new String[] { tranformation2, studentPrefCutoff },
+			transf
 		);
 		//tweak technique parameters in the call below
 		SimulatedAnnealingTechnique t = new SimulatedAnnealingTechnique(
@@ -74,13 +86,13 @@ public class TestStudentProjectMatchingPlusConnectorRealData {
 	}//end main
 	
 	/**
-	 * Write the summary of a StudentProjectMatchingProblem state to the console
+	 * Write the summary of a ClassJusticeMatchingProblem state to the console
 	 * in the form of a table
 	 * @param p, the problem for which s is a solution state
 	 * @param s, the state to summarize
 	 */
 	private static void showStateSummary(
-		StudentProjectMatchingProblem p, ManyToOneMatchingState s
+		ClassJusticeMatchingProblem p, ManyToOneMatchingState s
 	) {
 		System.out.println("State Summary");
 		//get the data to show

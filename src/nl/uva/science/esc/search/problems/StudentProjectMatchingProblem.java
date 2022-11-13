@@ -18,22 +18,26 @@ import nl.uva.science.esc.search.views.Parameter;
  * 
  * Each student assigns preferences explicitly only for few of the possible 
  * pairs: they are the high preferences. For all non-mentioned pairs an equal 
- * and very low default preference (high cost) is assumed.
+ * and very low preference / high cost is assumed: 
+ *      the nonChosenPlacePenalty
  * Projects assign explicit preferences only for candidates that expressed
  * explicit preference for them! (Explicitness is organised to be mutual).
  * Non-explicit preferences are temporarily indicated by zeroes in the prefs 
  * arrays.
+ * If there's a shortage of places then some students will not be placed at
+ * all, i.e. they will be placed at the bogus project. A separate penalty is
+ * used for this: the nonPlacementPenalty. 
  * 
  * The operator of this software can choose to disregard the higher numbered
  * (less desirable) explicit preferences of students, of projects, or of both
  * by choosing two 'cutoff' values. If the preference number that either the
  * student or the project assigned to the other party is equal or higher than
  * the respective cutoff value, the preference of this student-project pair is
- * set to the high default that also applies to unmentioned pairs.
+ * set to the nonChosenPlacePenalty, that also applies to unmentioned pairs.
  * We will have a 'studentprefcutoff', as well as a 'projectprefcutoff' parameter
  * for this purpose.
  * 
- * After this weighting, and default assigning, the problem is reduced to 
+ * After this weighting, and penalty assigning, the problem is reduced to 
  * a ManyToOneMatchingProblem
  * 
  * This class's knowledge of the un-reduced problem is also used in reporting
@@ -51,13 +55,14 @@ public class StudentProjectMatchingProblem extends ManyToOneMatchingProblem
 	//as nonmentioned preferences
 	private int studPrefCutoff; //cutoff value for preferences stated by students
 	private int projPrefCutoff; //cutoff value for preferences stated by projects
-	private int defaultPref;             //Preference for all nonmentioned pairs
+	private int nonChosenPlacePenalty;   //Preference for the nonmentioned student-project pairs
 	  //as well as for pairs where one of the two preferences is above the cutoff!
+	private int nonPlacementPenalty;     //Preference for not placing the student at all
 	private int[][] ABPreferencesStud;   //Preference of student A for project B
 	private int[][] ABPreferencesProj;	 //Preference of project B for student A
 
 	/**
-	 * Constructor does preprosessing to turn the specific problem into
+	 * Constructor does preprocessing to turn the specific problem into
 	 * the more general one: ** The preferences of both parties are weighted **
 	 * @param numberOfAs, how many students to link to projects
 	 * @param WStud, weight for students preferences
@@ -66,20 +71,28 @@ public class StudentProjectMatchingProblem extends ManyToOneMatchingProblem
 	 * @param BMax, maximum number of students for each project
 	 * @param ABPreferencesStud, preference of student A for project B
 	 * @param ABPreferencesProj, preference of project B for student A
+	 * @param nonChosenPlacePenalty, Preference for the nonmentioned student-project pairs
+	 * @param nonPlacementPenalty, Preference for not placing the student at all
+	 * @param hasPlacesShortage, too many students for the available places => last project given is bogus
+	 * @param transformprefs, name of transformation to perform on preference numbers
+	 * @param studPrefCutoff, cutoff value for preferences stated by students
+	 * @param projPrefCutoff, cutoff value for preferences stated by projects
 	 */
 	public StudentProjectMatchingProblem(
-			int numberOfAs, int WStud, int WProj, int defaultPref,
+			int numberOfAs, int WStud, int WProj, 
 			int[] BMin, int[] BMax, int[][] ABPreferencesStud, int[][] ABPreferencesProj,
+			int nonChosenPlacePenalty, int nonPlacementPenalty, boolean hasPlacesShortage, 
 			String transformprefs, int studPrefCutoff, int projPrefCutoff
 	) {
 		this.WStud = WStud;
 		this.WProj = WProj;
-		this.defaultPref = defaultPref;
 		this.ABPreferencesStud = ABPreferencesStud;
 		this.ABPreferencesProj = ABPreferencesProj;
+		this.nonChosenPlacePenalty = nonChosenPlacePenalty;
+		this.nonPlacementPenalty = nonPlacementPenalty;
 		this.studPrefCutoff = studPrefCutoff;
 		this.projPrefCutoff = projPrefCutoff;
-		this.ABPreferences = calcABPreferences(); //protected property of base class
+		this.ABPreferences = calcABPreferences(hasPlacesShortage); //protected property of base class
 		this.ABPreferencesT = this.transformPrefs(ABPreferences, transformprefs);
 		initPlacesAndPlans(BMin, BMax);     //protected method in base class
 		this.numberOfAs = numberOfAs;  //protected property of base class
@@ -97,12 +110,13 @@ public class StudentProjectMatchingProblem extends ManyToOneMatchingProblem
 		StudentProjectMatchingProblemConnector sc = (StudentProjectMatchingProblemConnector) c;
 		this.WStud = Integer.parseInt( parametervalues[0] );
 		this.WProj = Integer.parseInt( parametervalues[1] );
-		this.defaultPref = Integer.parseInt( parametervalues[2] );
+		this.nonChosenPlacePenalty = Integer.parseInt( parametervalues[2] );
+		this.nonPlacementPenalty = Integer.parseInt( parametervalues[6] );
 		this.ABPreferencesStud = sc.getABPreferencesStud();
 		this.ABPreferencesProj = sc.getABPreferencesProj();
 		this.studPrefCutoff = Integer.parseInt( parametervalues[4] );
 		this.projPrefCutoff = Integer.parseInt( parametervalues[5] );
-		this.ABPreferences = calcABPreferences(); //protected property of base class
+		this.ABPreferences = calcABPreferences(sc.hasPlacesShortage()); //protected property of base class
 		this.ABPreferencesT = this.transformPrefs(ABPreferences, parametervalues[3]);
 		initPlacesAndPlans( sc.getBMin(), sc.getBMax() );      //protected method in base class
 		this.numberOfAs = sc.getnumberOfAs();    //protected property of base class
@@ -110,12 +124,12 @@ public class StudentProjectMatchingProblem extends ManyToOneMatchingProblem
 	
 	/**
 	 * Do the weighting of student-stated and project-stated preferences
-	 * Assign a default (high, unwanted) preference to all nonmentioned pairs
-	 * as well as to the pairs where one of both stated preferences is equal or
-	 * above the respective (operator-chosen) cutoff value
+	 * Assign a penalty to all nonmentioned pairs as well as to the pairs where one of both 
+	 * stated preferences is equal or above the respective (operator-chosen) cutoff value.
+	 * Assign a separate penalty for placement on the bogus project (i.e. not placed at all)
 	 * @return ABPreferences
 	 */
-	private int[][] calcABPreferences() {
+	private int[][] calcABPreferences(boolean placesShortage) {
 		int ABPreferences[][] = new int[ABPreferencesStud.length][ABPreferencesStud[0].length];
 		for (int i=0; i<ABPreferences.length; i++) {
 			for (int j=0; j<ABPreferences[0].length; j++) {
@@ -124,9 +138,17 @@ public class StudentProjectMatchingProblem extends ManyToOneMatchingProblem
 					ABPreferencesStud[i][j]>=studPrefCutoff ||
 					ABPreferencesProj[i][j]>=projPrefCutoff
 				) {
-					ABPreferences[i][j] = defaultPref; 
+					if (placesShortage && j == ABPreferences[0].length - 1) {
+						//student is not placed (placed on bogusproject)
+						ABPreferences[i][j] = nonPlacementPenalty;
+					}
+					else {
+						//the student did not choose this project, or the preference is above the cutoff: ignore
+						ABPreferences[i][j] = nonChosenPlacePenalty; 						
+					}
 				}
 				else {
+					//explicit preferences were assigned by student and project, and are used
 					ABPreferences[i][j] = WStud * ABPreferencesStud[i][j] + 
 						WProj * ABPreferencesProj[i][j];					
 				}//end if
@@ -243,13 +265,14 @@ public class StudentProjectMatchingProblem extends ManyToOneMatchingProblem
 		return new Parameter[] {
 				new Parameter("studentsprefweight", true, InputType.POSITIVEINT), 
 				new Parameter("projectsprefweight", true, InputType.POSITIVEINT), 
-				new Parameter("notchosenpenalty", true, InputType.POSITIVEINT), 
+				new Parameter("nonChosenPlacePenalty", true, InputType.POSITIVEINT), 
 				new Parameter("transformpreferences", true, InputType.STRING), 
 				//This 4e inputtype is not really good.
 				//It's really an enum type whose possible values should be
 				//shown in a selectbox, instead of being typed in. ToDo!
 				new Parameter("studentprefcutoff", true, InputType.POSITIVEINT),
-				new Parameter("projectprefcutoff", true, InputType.POSITIVEINT)
+				new Parameter("projectprefcutoff", true, InputType.POSITIVEINT),
+				new Parameter("nonPlacementPenalty", true, InputType.POSITIVEINT)
 		};
 	}//end advertiseParameters
 	
