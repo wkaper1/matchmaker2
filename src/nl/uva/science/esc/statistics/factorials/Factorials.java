@@ -43,17 +43,18 @@ public class Factorials {
 		Double gammaF0 = gammaFactor.get((Integer)n);
 		if (gammaF0 == null) {
 			boolean even = (n % 2 == 0);
-			n--;
-			double gammaF = n;
+			int i = n;
+			i--;
+			double gammaF = i;
 			boolean upper = false;
-			while (n > 1) {
-				n--;
+			while (i > 1) {
+				i--;
 				if (upper) {
-					gammaF = gammaF * n;
+					gammaF = gammaF * i;
 					upper = false;
 				}
 				else {
-					gammaF = gammaF / n;
+					gammaF = gammaF / i;
 					upper = true;
 				}
 			}
@@ -125,14 +126,13 @@ public class Factorials {
 			boolean even;
 			if (gmax == 0) { //start with nothing
 				gammaFactor2[1] = 0;  //undefined?
-				gammaFactor2[2] = 0;  //undefined?
-				gFOdd = 2;
-				gFEven = 3.0/2;
+				gFEven = 1.0;
+				gFOdd = 2.0;
+				gammaFactor2[2] = correctGFactor(gFEven, 2);
 				gammaFactor2[3] = correctGFactor(gFOdd, 3);
-				gammaFactor2[4] = correctGFactor(gFEven, 4);
-				gFOdd = gFOdd / 3;
-				g = 4;
-				even = true;
+				g = 3;
+				gFEven = gFEven / (g - 1);
+				even = false;
 			}
 			else { //start from previous valid gmax
 				gFOdd = preGFactorOdd;
