@@ -1,6 +1,4 @@
-package nl.uva.science.esc.statistics.factorials;
-
-import java.io.Console;
+package nl.uva.science.esc.math.factorials;
 
 public class TestFactorials {
 

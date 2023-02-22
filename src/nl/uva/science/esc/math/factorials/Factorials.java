@@ -1,4 +1,4 @@
-package nl.uva.science.esc.statistics.factorials;
+package nl.uva.science.esc.math.factorials;
 
 import java.util.HashMap;
 
