@@ -15,6 +15,8 @@ public class RationalNumber {
 		this.denominator = denominator;
 	}
 	
+	//operations that modify this object
+	
 	public void ToThisAddInt(int n) {
 		numerator += n * denominator;
 	}
@@ -29,6 +31,22 @@ public class RationalNumber {
 		denominator = denominator * r.numerator;
 	}
 	
+	//operations that do not modify 'this' but return a new Rational
+	
+	public RationalNumber AddInt(int n) {
+		return new RationalNumber(numerator + n * denominator, denominator);
+	}
+	
+	public RationalNumber MultiplyBy(RationalNumber r) {
+		return new RationalNumber(numerator * r.numerator, denominator * r.denominator);
+	}
+	
+	public RationalNumber DivideBy(RationalNumber r) {
+		return new RationalNumber(numerator * r.denominator, denominator * r.numerator);
+	}
+	
+	//operations that take a double and result in a double
+	
 	public double MultiplyGivenDoubleByThis(double d) {
 		return d * numerator / denominator;
 	}
@@ -40,6 +58,8 @@ public class RationalNumber {
 	public double toDouble() {
 		return ((double)numerator) / denominator;
 	}
+	
+	//simple getters and other housekeeping methods
 	
 	public int numerator() {
 		return this.numerator;
