@@ -1,5 +1,6 @@
 package nl.uva.science.esc.math.factorials;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 
 /**
@@ -8,7 +9,7 @@ import java.util.HashMap;
  * @author wkaper1
  */
 public class Factorials {
-	private static HashMap<Integer, Long> factorial = new HashMap<Integer, Long>();
+	private static HashMap<Integer, BigInteger> factorial = new HashMap<Integer, BigInteger>();
 	private static HashMap<Integer, Double> gammaFactor = new HashMap<Integer, Double>();
 	
 	//The below version 1 methods use ordinary caching like you would do in any long running deterministic method
@@ -17,19 +18,19 @@ public class Factorials {
 	/**
 	 * The wellknown factorial function
 	 */
-	public static long factorial(int n) {
-		Long fact0 = factorial.get((Integer)n);
-		if (fact0 == null) {
-			long fact = (long)n;
+	public static BigInteger factorial(int n) {
+		BigInteger fact = factorial.get((Integer)n);
+		if (fact == null) {
+			fact = BigInteger.valueOf(n);
 			while (n > 1) {
 				n--;
-				fact = fact * n;
+				fact = fact.multiply(BigInteger.valueOf(n));
 			}
-			factorial.put((Integer)n, (Long)fact);
+			factorial.put((Integer)n, (BigInteger)fact);
 			return fact;
 		}
 		else 
-			return (long)fact0;
+			return (BigInteger)fact;
 	}
 
 	/**
@@ -76,21 +77,21 @@ public class Factorials {
 	//  They consume memory more quickly but after many calls the difference gets less.
 	//  The method is not as general as the above: it exploits the quite special 'factorial' property.
 	
-	private static long[] factorial2 = new long[1000];   //array instead of hashmap, index 0 remains unused
+	private static BigInteger[] factorial2 = new BigInteger[1000];   //array instead of hashmap, index 0 remains unused
 	private static int nmax = 0;  //to what n is the factorial2 array currently filled?
 	
 	/**
 	 * The wellknown factorial function, version 2
 	 */
-	public static long factorial2(int n) {
+	public static BigInteger factorial2(int n) {
 		if (n > nmax) {
 			int i;
-			long fact;
+			BigInteger fact;
 			//fill the array up to the required point, starting from the highest n already filled
 			if (nmax == 0) { //invalid starting point
 				i = 1;
-				factorial2[1] = 1;
-				fact = 1;
+				factorial2[1] = new BigInteger("1");
+				fact = new BigInteger("1");
 			}
 			else { //valid starting point
 				i = nmax;
@@ -98,7 +99,7 @@ public class Factorials {
 			}
 			while (i < n) { //fill it up!
 				i++;
-				fact = fact * i;
+				fact = fact.multiply(BigInteger.valueOf(i));
 				factorial2[i] = fact;
 			}
 			nmax = i;

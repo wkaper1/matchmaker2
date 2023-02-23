@@ -1,9 +1,11 @@
 package nl.uva.science.esc.math.factorials;
 
+import java.math.BigInteger;
+
 public class TestFactorials {
 
 	public static void main(String[] args) {
-		long rs;
+		BigInteger rs;
 		for (int n=100; n>0; n--) {
 			rs = Factorials.factorial(n);
 			System.out.println("n=" + n + ", n!=" + rs);

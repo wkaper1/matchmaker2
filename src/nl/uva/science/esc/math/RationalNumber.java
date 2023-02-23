@@ -1,5 +1,7 @@
 package nl.uva.science.esc.math;
 
+import java.math.*;
+
 /**
  * Represents a rational number as two integers.
  * Enables postponing of rounding. E.g. you could cache the outcome of a calculation
@@ -7,65 +9,70 @@ package nl.uva.science.esc.math;
  * @author wkaper1
  */
 public class RationalNumber {
-	private int numerator;
-	private int denominator;
+	private BigInteger numerator;
+	private BigInteger denominator;
 	
-	public RationalNumber(int numerator, int denominator) {
+	public RationalNumber(BigInteger numerator, BigInteger denominator) {
 		this.numerator = numerator;
 		this.denominator = denominator;
+	}
+	
+	public RationalNumber(long numerator, long denominator) {
+		this.numerator = BigInteger.valueOf(denominator);
+		this.denominator = BigInteger.valueOf(denominator);
 	}
 	
 	//operations that modify this object
 	
 	public void ToThisAddInt(int n) {
-		numerator += n * denominator;
+		numerator = numerator.add(denominator.multiply(BigInteger.valueOf(n)));
 	}
 	
 	public void MultiplyThisBy(RationalNumber r) {
-		numerator = numerator * r.numerator;
-		denominator = denominator * r.denominator;
+		numerator = numerator.multiply(r.numerator);
+		denominator = denominator.multiply(r.denominator);
 	}
 	
 	public void DivideThisBy(RationalNumber r) {
-		numerator = numerator * r.denominator;
-		denominator = denominator * r.numerator;
+		numerator = numerator.multiply(r.denominator);
+		denominator = denominator.multiply(r.numerator);
 	}
 	
 	//operations that do not modify 'this' but return a new Rational
 	
 	public RationalNumber AddInt(int n) {
-		return new RationalNumber(numerator + n * denominator, denominator);
+		return new RationalNumber(numerator.add(denominator.multiply(BigInteger.valueOf(n))), denominator);
 	}
 	
 	public RationalNumber MultiplyBy(RationalNumber r) {
-		return new RationalNumber(numerator * r.numerator, denominator * r.denominator);
+		return new RationalNumber(numerator.multiply(r.numerator), denominator.multiply(r.denominator));
 	}
 	
 	public RationalNumber DivideBy(RationalNumber r) {
-		return new RationalNumber(numerator * r.denominator, denominator * r.numerator);
+		return new RationalNumber(numerator.multiply(r.denominator), denominator.multiply(r.numerator));
 	}
 	
 	//operations that take a double and result in a double
 	
 	public double MultiplyGivenDoubleByThis(double d) {
-		return d * numerator / denominator;
+		return d * ((new BigDecimal(numerator)).divide(new BigDecimal(denominator))).doubleValue();
 	}
 	
 	public double DivideGivenDoubleByThis(double d) {
-		return d * denominator / numerator;
+		return d * ((new BigDecimal(denominator)).divide(new BigDecimal(numerator))).doubleValue();
 	}
 	
 	public double toDouble() {
-		return ((double)numerator) / denominator;
+		return ((new BigDecimal(numerator)).divide(new BigDecimal(denominator))).doubleValue();
 	}
 	
 	//simple getters and other housekeeping methods
 	
-	public int numerator() {
+	public BigInteger numerator() {
 		return this.numerator;
 	}
 	
-	public int denominator() {
+	public BigInteger denominator() {
 		return this.denominator;
 	}
 	
