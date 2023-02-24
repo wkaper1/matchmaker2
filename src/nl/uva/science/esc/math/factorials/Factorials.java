@@ -2,6 +2,7 @@ package nl.uva.science.esc.math.factorials;
 
 import java.math.BigInteger;
 import java.util.HashMap;
+import nl.uva.science.esc.math.RationalNumber;
 
 /**
  * Ab initio calculation of factorials and functions involving factorials and caching the results.
@@ -46,27 +47,28 @@ public class Factorials {
 			boolean even = (n % 2 == 0);
 			int i = n;
 			i--;
-			double gammaF = i;
+			RationalNumber gammaF = new RationalNumber(i, 1);
 			boolean upper = false;
 			while (i > 1) {
 				i--;
 				if (upper) {
-					gammaF = gammaF * i;
+					gammaF.MultiplyThisByInt(i);
 					upper = false;
 				}
 				else {
-					gammaF = gammaF / i;
+					gammaF.DivideThisByInt(i);
 					upper = true;
 				}
 			}
+			double gammaF2;
 			if (even) {
-				gammaF = gammaF / (2 * Math.sqrt(n));
+				gammaF2 = gammaF.toDouble() / (2 * Math.sqrt(n));
 			}
 			else {
-				gammaF = gammaF / (Math.PI * Math.sqrt(n)); 
+				gammaF2 = gammaF.toDouble() / (Math.PI * Math.sqrt(n)); 
 			}
-			gammaFactor.put((Integer)n, (Double)gammaF);
-			return gammaF;
+			gammaFactor.put((Integer)n, (Double)gammaF2);
+			return gammaF2;
 		}
 		else
 			return (double)gammaF0;

@@ -24,7 +24,7 @@ public class RationalNumber {
 	
 	//operations that modify this object
 	
-	public void ToThisAddInt(int n) {
+	public void ToThisAddInt(long n) {
 		numerator = numerator.add(denominator.multiply(BigInteger.valueOf(n)));
 	}
 	
@@ -36,6 +36,14 @@ public class RationalNumber {
 	public void DivideThisBy(RationalNumber r) {
 		numerator = numerator.multiply(r.denominator);
 		denominator = denominator.multiply(r.numerator);
+	}
+	
+	public void MultiplyThisByInt(long n) {
+		numerator = numerator.multiply(BigInteger.valueOf(n));
+	}
+	
+	public void DivideThisByInt(long n) {
+		denominator = denominator.multiply(BigInteger.valueOf(n));
 	}
 	
 	//operations that do not modify 'this' but return a new Rational
@@ -55,15 +63,15 @@ public class RationalNumber {
 	//operations that take a double and result in a double
 	
 	public double MultiplyGivenDoubleByThis(double d) {
-		return d * ((new BigDecimal(numerator)).divide(new BigDecimal(denominator))).doubleValue();
+		return d * ((new BigDecimal(numerator)).divide(new BigDecimal(denominator), 16, RoundingMode.HALF_EVEN)).doubleValue();
 	}
 	
 	public double DivideGivenDoubleByThis(double d) {
-		return d * ((new BigDecimal(denominator)).divide(new BigDecimal(numerator))).doubleValue();
+		return d * ((new BigDecimal(denominator)).divide(new BigDecimal(numerator), 16, RoundingMode.HALF_EVEN)).doubleValue();
 	}
 	
 	public double toDouble() {
-		return ((new BigDecimal(numerator)).divide(new BigDecimal(denominator))).doubleValue();
+		return ((new BigDecimal(numerator)).divide(new BigDecimal(denominator), 16, RoundingMode.HALF_EVEN)).doubleValue();
 	}
 	
 	//simple getters and other housekeeping methods
