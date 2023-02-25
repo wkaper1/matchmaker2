@@ -18,7 +18,7 @@ public class RationalNumber {
 	}
 	
 	public RationalNumber(long numerator, long denominator) {
-		this.numerator = BigInteger.valueOf(denominator);
+		this.numerator = BigInteger.valueOf(numerator);
 		this.denominator = BigInteger.valueOf(denominator);
 	}
 	
@@ -63,15 +63,15 @@ public class RationalNumber {
 	//operations that take a double and result in a double
 	
 	public double MultiplyGivenDoubleByThis(double d) {
-		return d * ((new BigDecimal(numerator)).divide(new BigDecimal(denominator), 16, RoundingMode.HALF_EVEN)).doubleValue();
+		return d * ((new BigDecimal(numerator)).divide(new BigDecimal(denominator), 17, RoundingMode.HALF_EVEN)).doubleValue();
 	}
 	
 	public double DivideGivenDoubleByThis(double d) {
-		return d * ((new BigDecimal(denominator)).divide(new BigDecimal(numerator), 16, RoundingMode.HALF_EVEN)).doubleValue();
+		return d * ((new BigDecimal(denominator)).divide(new BigDecimal(numerator), 17, RoundingMode.HALF_EVEN)).doubleValue();
 	}
 	
 	public double toDouble() {
-		return ((new BigDecimal(numerator)).divide(new BigDecimal(denominator), 16, RoundingMode.HALF_EVEN)).doubleValue();
+		return ((new BigDecimal(numerator)).divide(new BigDecimal(denominator), 17, RoundingMode.HALF_EVEN)).doubleValue();
 	}
 	
 	//simple getters and other housekeeping methods
@@ -82,6 +82,10 @@ public class RationalNumber {
 	
 	public BigInteger denominator() {
 		return this.denominator;
+	}
+	
+	public String toString() {
+		return numerator.toString() + " / " + denominator.toString();
 	}
 	
 	public RationalNumber clone() {
