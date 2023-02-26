@@ -1,5 +1,9 @@
 package nl.uva.science.esc.statistics.distributionsequal;
 
+/**
+ * Calculate variance (and mean) from (double) data values according to the Shifted Data algorithm
+ * @author Wolter2
+ */
 public class MeanAndVarianceAccumulatorShiftedDataAlgorithm extends MeanAndVarianceAccumulator  {
 	int n;               //number of data-elements
 	double sum;          //sum of the data-elements, used in calculating the mean
