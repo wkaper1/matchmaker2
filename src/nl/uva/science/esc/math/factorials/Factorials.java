@@ -112,29 +112,27 @@ public class Factorials {
 	}
 
 	private static double[] gammaFactor2 = new double[1000];
-	private static double preGFactorEven;         //uncorrected gFactor, highest numbered even, fitting to gmax
-	private static double preGFactorOdd;          //uncorrected gFactor, highest numbered odd, fitting to gmax
+	private static RationalNumber preGFactorEven;         //uncorrected gFactor, highest numbered even, fitting to gmax
+	private static RationalNumber preGFactorOdd;          //uncorrected gFactor, highest numbered odd, fitting to gmax
 	private static int gmax = 0;                  //to what max index is the gammaFactor array filled?
 
 	/**
 	 * The gammaFactor function, explained above, version 2
-	 * @param n
-	 * @return
 	 */
 	public static double gammaFactor2(int n) {
 		if (n > gmax) {
 			int g;
-			double gFOdd;
-			double gFEven;
+			RationalNumber gFOdd;
+			RationalNumber gFEven;
 			boolean even;
 			if (gmax == 0) { //start with nothing
 				gammaFactor2[1] = 0;  //undefined?
-				gFEven = 1.0;
-				gFOdd = 2.0;
+				gFEven = new RationalNumber(1, 1);
+				gFOdd = new RationalNumber(2, 1);
 				gammaFactor2[2] = correctGFactor(gFEven, 2);
 				gammaFactor2[3] = correctGFactor(gFOdd, 3);
 				g = 3;
-				gFEven = gFEven / (g - 1);
+				gFEven.DivideThisByInt(g - 1);
 				even = false;
 			}
 			else { //start from previous valid gmax
@@ -147,13 +145,13 @@ public class Factorials {
 				g++;
 				even = !even;
 				if (even) {
-					gFOdd = gFOdd / (g - 1);
-					gFEven = gFEven * (g - 1);
+					gFOdd.DivideThisByInt(g - 1);
+					gFEven.MultiplyThisByInt(g - 1);
 					gammaFactor2[g] = correctGFactor(gFEven, g);
 				}
 				else {
-					gFOdd = gFOdd * (g - 1);
-					gFEven = gFEven / (g - 1);
+					gFOdd.MultiplyThisByInt(g - 1);
+					gFEven.DivideThisByInt(g - 1);
 					gammaFactor2[g] = correctGFactor(gFOdd, g);
 				}
 			}
@@ -164,12 +162,12 @@ public class Factorials {
 		return gammaFactor2[n];
 	}
 	
-	private static double correctGFactor(double preGFactor, int n) {
+	private static double correctGFactor(RationalNumber preGFactor, int n) {
 		if (n % 2 == 0) { //n is even
-			return preGFactor / (2 * Math.sqrt(n));
+			return preGFactor.toDouble() / (2 * Math.sqrt(n));
 		}
 		else { //n is odd
-			return preGFactor / (Math.PI * Math.sqrt(n));
+			return preGFactor.toDouble() / (Math.PI * Math.sqrt(n));
 		}
 	}
 }
