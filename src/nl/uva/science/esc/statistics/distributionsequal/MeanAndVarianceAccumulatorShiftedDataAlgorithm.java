@@ -22,7 +22,10 @@ public class MeanAndVarianceAccumulatorShiftedDataAlgorithm extends MeanAndVaria
 		sum = 0;
 		this.shiftingConst = shiftingConst;
 	}
-	
+
+	/**
+	 * Add a data element to the set, a double
+	 */
 	public void addDataElement(double d) {
 		n++;
 		sum += d;
@@ -39,19 +42,23 @@ public class MeanAndVarianceAccumulatorShiftedDataAlgorithm extends MeanAndVaria
 			sumToSquare += diff;
 		}
 	}
-	
+
+	/**
+	 * Get the mean of the added elements
+	 */
 	public double mean() throws Exception {
 		if (n > 0) {
 			return sum / n;			
 		}
 		else
-			throw new Exception("Number of data-elements is zero, no means is yet available.");
+			throw new Exception("Number of data-elements is zero, mean is not available.");
 	}
 	
 	/**
 	 * Get the variance of the population added or an estimate of the population variance if
 	 * we saw just a randomly chosen sample of it 
-	 * @param fullPopulation, did we see the full population? Alternative: we saw a random sample.
+	 * @param fullPopulation, did we see the full population that interests us? 
+	 *    Alternative: no, we just saw a random sample of that population.
 	 */
 	public double variance(boolean fullPopulation) throws Exception {
 		if (n > 1) {
@@ -60,5 +67,17 @@ public class MeanAndVarianceAccumulatorShiftedDataAlgorithm extends MeanAndVaria
 		}
 		else 
 			throw new Exception("Number of data-elements is: " + n + ", while variance has meaning only for n >= 2.");
+	}
+
+	/**
+	 * The undividedVariance is the variance before being divided by either n or (n-1).
+	 * It has application in at least the calculation of an ANOVA.
+	 */
+	public double undividedVariance() throws Exception {
+		if (n > 1) {
+			return sumOfSquares - Math.pow(sumToSquare, 2) / n;
+		}
+		else 
+			throw new Exception("Number of data-elements is: " + n + ", while variance has meaning only for n >= 2.");	
 	}
 }
