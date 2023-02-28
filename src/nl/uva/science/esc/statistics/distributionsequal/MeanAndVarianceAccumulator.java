@@ -6,6 +6,11 @@ import java.util.Collection;
  * Add data-elements and then calculate mean and estimated variance for the elements added up to now
  */
 public abstract class MeanAndVarianceAccumulator {
+
+	/**
+	 * Algorithm to use if you call this class' factory method
+	 */
+	public static final String currentAlgorithm = "ShiftedData";
 	
 	/**
 	 * Add a data-element
@@ -30,8 +35,30 @@ public abstract class MeanAndVarianceAccumulator {
 	 * It has application in at least the calculation of an ANOVA.
 	 */
 	public abstract double undividedVariance() throws Exception;
-	
+
+	/**
+	 * Returns the number of elements accumulated
+	 */
+	public abstract int count();
+
+	/**
+	 * Add all the Doubles in the given Collection to this accumulator
+	 */
 	public void addRange(Collection<Double> elements) {
 		elements.forEach(element -> { addDataElement(element); });
+	}
+	
+	/**
+	 * Factory method, to implement the current default algorithm
+	 */
+	public static MeanAndVarianceAccumulator Create() throws Exception {
+		switch (currentAlgorithm) {
+			case "ShiftedData": 
+				return new MeanAndVarianceAccumulatorShiftedDataAlgorithm();
+			case "Welfords": 
+				return new MeanAndVarianceAccumulatorWelfordsAlgorithm();
+			default: 
+				throw new Exception("Unknown algorithm " + currentAlgorithm);
+		}
 	}
 }

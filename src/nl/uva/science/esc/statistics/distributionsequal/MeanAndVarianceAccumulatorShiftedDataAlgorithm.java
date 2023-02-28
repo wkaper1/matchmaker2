@@ -80,4 +80,8 @@ public class MeanAndVarianceAccumulatorShiftedDataAlgorithm extends MeanAndVaria
 		else 
 			throw new Exception("Number of data-elements is: " + n + ", while variance has meaning only for n >= 2.");	
 	}
+	
+	public int count() {
+		return n;
+	}
 }

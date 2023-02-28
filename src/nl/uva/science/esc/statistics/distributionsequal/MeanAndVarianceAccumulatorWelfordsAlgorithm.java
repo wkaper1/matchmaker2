@@ -44,4 +44,9 @@ public class MeanAndVarianceAccumulatorWelfordsAlgorithm extends MeanAndVariance
 		else
 			throw new Exception("Number of data-elements is: " + n + ", while variance has meaning only for n >= 2.");	
 	}
+	
+	@Override
+	public int count() {
+		return n;
+	}
 }
