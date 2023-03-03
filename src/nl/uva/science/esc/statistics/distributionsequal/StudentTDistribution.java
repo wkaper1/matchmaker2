@@ -59,6 +59,7 @@ public class StudentTDistribution {
 	
 	//version 2, using caching of the hyperGeometricFactors (df, n)
 	//  df is the HashMap key, n is the array index
+	//  The downside of this caching is we calculate way more terms than we need, to avoid upgrading the PochhammerSeries type
 	private static HashMap<Integer, double[]> hyperGeometricFactors = new HashMap<Integer, double[]>();
 	
 	//Choose it really large, you can't get past it, you can only enlarge it.
@@ -125,4 +126,6 @@ public class StudentTDistribution {
 	public static double ProbabilityOfAbsTOrSmaller2(double t, int df) {
 		return CumulativeProbability2(t, df) - CumulativeProbability2(-t, df);
 	}
+	
+	//Version 3 cacching, using the new PochhammerSeries3 type, it can restart a series "in the middle".
 }
