@@ -12,10 +12,38 @@ import java.util.function.DoubleUnaryOperator;
  */
 public abstract class Integrator {
 	
+	public enum method {
+		TRAPEZOIDAL_RULE,
+		SIMPSONS_RULE
+	}
+	
+	public static final method defaultMethod = method.SIMPSONS_RULE;
+	
+	protected Integrator() {
+	}
+	
 	/**
 	 * Calculate one definite integral
 	 */
 	public abstract double integrate(DoubleUnaryOperator function, double lowerbound, double upperbound, int numIntervals);
+
+	/**
+	 * Factory: returns an Integrator that implements the chosen method
+	 */
+	public static Integrator Create(method method1) {
+		switch (method1) {
+			case TRAPEZOIDAL_RULE: return new TrapezoidalRuleIntegrator();
+			case SIMPSONS_RULE: return new SimpsonsRuleIntegrator();
+			default: return null;
+		}
+	}
+	
+	/**
+	 * Factory: returns an integrator that implements the application-wide default
+	 */
+	public static Integrator Create() {
+		return Create(defaultMethod);
+	}
 
 	/**
 	 * Find the number of intervals that satisfies the given convergence criterion, by successively
