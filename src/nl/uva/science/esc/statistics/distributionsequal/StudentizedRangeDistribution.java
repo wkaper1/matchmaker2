@@ -1,5 +1,9 @@
 package nl.uva.science.esc.statistics.distributionsequal;
 
+import java.util.function.DoubleUnaryOperator;
+
+import nl.uva.science.esc.math.integration.Integrator;
+
 /**
  * Static functions involved in calculation the cumulative probability for the Studentized
  * Range Distribution as used in Tukey's Honestly Significant Difference test.
@@ -26,11 +30,12 @@ public class StudentizedRangeDistribution {
 	public static final double b5 = 1.330274429;
 	public static final double p  =  .2316419;
 	public static final double sqrtTwoPi = Math.sqrt(2 * Math.PI);
+	private static Integrator int1 = Integrator.Create();
 	
 	/**
-	 * Calculates the cumulative probability for the normal distribution
-	 * from minus infinity up to x.
-	 * @param x, normalised variable for normal distribution
+	 * Inner integral: The cumulative probability for the normal distribution
+	 * from minus infinity up to x. It's approximated by a polynomial.
+	 * @param x, normalized variable for normal distribution
 	 */
 	public static double CumulativeProbabilityNormalDistribution(double x) {
 		boolean positive = (x >= 0);
@@ -38,9 +43,9 @@ public class StudentizedRangeDistribution {
 		if (!positive) {
 			x = -x;
 		}
-		double Z = Math.exp(-x * x /2) / sqrtTwoPi;
+		double z = Math.exp(-x * x /2) / sqrtTwoPi;
 		double t = 1 / (1 + p * x);
-		double Px = 1 - Z * (b1*t + b2*t*t + b3*t*t*t + b4*t*t*t*t + b5*t*t*t*t*t);
+		double Px = 1 - z * (b1*t + b2*t*t + b3*t*t*t + b4*t*t*t*t + b5*t*t*t*t*t);
 		//But we can find the negative part of the curve by symmetry!
 		if (positive) {
 			return Px;
@@ -48,5 +53,49 @@ public class StudentizedRangeDistribution {
 		else {
 			return 1 - Px;
 		}
+	}
+	
+	/**
+	 * Integrand of "middle integral", it calls the inner integral.
+	 *   TODO: Why is this a public method? Because I need to tune the integral - is that a good reason?
+	 * @param n, number of treatments compared
+	 * @param t, integration variable for the outer integral (see next method)
+	 * @param u, integration variable for this middle integral
+	 */
+	public static double MiddleIntegrand(int n, double t, double u) {
+		double z = Math.exp(-u * u /2) / sqrtTwoPi;
+		double diff = CumulativeProbabilityNormalDistribution(u + t)
+				- CumulativeProbabilityNormalDistribution(u);
+		return z * Math.pow(diff, n - 1);
+	}
+
+	/**
+	 * Integrand of the "outer integral", it contains calculation of the middle integral
+	 * @param n, number of treatments compared
+	 * @param df, degrees of freedom of the error variance
+	 * @param q, studentized range statistic
+	 * @param t, integration variable for this outer integral
+	 */
+	public static double OuterIntegrand(int n, int df, double q, double t) {
+		DoubleUnaryOperator f = (u) -> MiddleIntegrand(n, t, u);
+		double Pnt = n * int1.integrate(f, -7, 4, 256);    //TODO: tune this integral!
+		double tq = t / q;
+		double z = Math.exp(-tq * tq /2) / sqrtTwoPi;
+		return Math.pow(4*tq*z, df) * (1 - Pnt) / t;
+	}
+	
+	/**
+	 * Calculate the probability for the given n, df and q this large, or larger
+	 * @param n, number of treatments compared
+	 * @param df, degrees of freedom of the error variance
+	 * @param q, studentized range statistic
+	 */
+	public static double Distribution(int n, int df, double q) {
+		DoubleUnaryOperator f = (t) -> OuterIntegrand(n, df, q, t);
+		//TODO: tune and decide boundaries as functions of q and df, see Dunlop et al.
+		double Int = int1.integrate(f, n, n, n);
+		double Gamma = 1;  //TODO: find gamma as function of df / 2, i.e. fraction with 2 as denominator
+		double cv = 2 * Math.pow(Math.sqrt(df * Math.PI) / 4, df) / Gamma;
+		return cv * Int;
 	}
 }
