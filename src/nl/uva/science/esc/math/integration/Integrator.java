@@ -82,7 +82,9 @@ public abstract class Integrator {
 				System.out.print(converged);
 				System.out.println();
 			}
+			//prepare next iteration
 			intervals = intervals * growFactor;
+			prevApprox = approx;
 		}
 		return intervals;
 	}	
