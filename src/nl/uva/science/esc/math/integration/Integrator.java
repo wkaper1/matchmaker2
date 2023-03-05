@@ -111,6 +111,9 @@ public abstract class Integrator {
 			intervals = intervals * growFactor;
 			prevApprox = approx;
 		}
+		if (verbose) {
+			System.out.println();
+		}
 		return intervals;
 	}
 	

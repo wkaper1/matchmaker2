@@ -3,6 +3,8 @@ package nl.uva.science.esc.statistics.distributionsequal;
 import java.util.function.DoubleUnaryOperator;
 
 import nl.uva.science.esc.math.integration.Integrator;
+import nl.uva.science.esc.math.integration.Integrator.boundary;
+import nl.uva.science.esc.math.integration.Integrator.method;
 
 /**
  * Static functions involved in calculation the cumulative probability for the Studentized
@@ -57,12 +59,11 @@ public class StudentizedRangeDistribution {
 	
 	/**
 	 * Integrand of "middle integral", it calls the inner integral.
-	 *   TODO: Why is this a public method? Because I need to tune the integral - is that a good reason?
 	 * @param n, number of treatments compared
 	 * @param t, integration variable for the outer integral (see next method)
 	 * @param u, integration variable for this middle integral
 	 */
-	public static double MiddleIntegrand(int n, double t, double u) {
+	private static double MiddleIntegrand(int n, double t, double u) {
 		double z = Math.exp(-u * u /2) / sqrtTwoPi;
 		double diff = CumulativeProbabilityNormalDistribution(u + t)
 				- CumulativeProbabilityNormalDistribution(u);
@@ -76,7 +77,7 @@ public class StudentizedRangeDistribution {
 	 * @param q, studentized range statistic
 	 * @param t, integration variable for this outer integral
 	 */
-	public static double OuterIntegrand(int n, int df, double q, double t) {
+	private static double OuterIntegrand(int n, int df, double q, double t) {
 		DoubleUnaryOperator f = (u) -> MiddleIntegrand(n, t, u);
 		double Pnt = n * int1.integrate(f, -7, 4, 256);    //TODO: tune this integral!
 		double tq = t / q;
@@ -97,5 +98,40 @@ public class StudentizedRangeDistribution {
 		double Gamma = 1;  //TODO: find gamma as function of df / 2, i.e. fraction with 2 as denominator
 		double cv = 2 * Math.pow(Math.sqrt(df * Math.PI) / 4, df) / Gamma;
 		return cv * Int;
+	}
+
+	/**
+	 * Run the tuning tests for the middle and outer integrals and show the results.
+	 * After incorporating the tuning results into the middle integral, repeat the tests
+	 * and finally incorporate the results into the outer integral.
+	 */
+	public static void tuningReport() {
+		Integrator int1 = Integrator.Create(method.TRAPEZOIDAL_RULE);
+		Integrator int2 = Integrator.Create();  //should be Simpson's
+		double points[] = new double[] {-10, -6, -5, -2, -0.5, -0.25, -0.1, 0, 0.1, 0.25, 0.5, 1, 2, 5, 10, 20};
+		
+		System.out.println("Tuning tests for: the middle integral");
+		System.out.println();
+		System.out.println("Explore integral from minus infinity (=-10), numIntervals high (516)");
+		System.out.println();
+		int n = 3;     //number of treatments
+		double t = 1;  //variable to integrate away in the outer integral...
+		   //0 or a big value for t make the integrand vanish...
+		   //what is the influence of these two? I'm relying on the Fortran guys saying they make no difference, mm...
+		DoubleUnaryOperator function = (u) -> MiddleIntegrand(n, t, u);
+		int2.tabulate(function, 516, points, boundary.UPPER, -10);
+		System.out.println("The integral rises from zero on the left up to a horizontal asymptote on the right.");
+		System.out.println("Determine boundaries on both sides that fit our accuracy of 7 decimals.");
+		System.out.println();
+		int2.vanishes(function, 516, boundary.LOWER, -10, -2.5, 0.5, 1E-8, true);
+		int2.vanishes(function, 516, boundary.UPPER, +6, +1.5, 0.5, 1E-8, true);
+		System.out.println("Conclusion: integration from -3.5 to 3.0 can replace minus to plus infinity.");
+		System.out.println("Determine optimal method and number of intervals for our accuracy of 7 digits.");
+		int1.tuneIntervals(function, -3.5, 3.0, 8, 2, 1E-8, 2, true);
+		int2.tuneIntervals(function, -3.5, 3.0, 8, 2, 1E-8, 2, true);
+		System.out.println("Conclusion: trapezoidal rule gives quickest convergence, 64 intervals is more than adequate.");
+		
+		//TODO 1: do something to estimate the parameters influence?
+		//TODO 2: on to the outer integral where the parameters DO play a role according to the Fortran authors. But they do not state which role.
 	}
 }
