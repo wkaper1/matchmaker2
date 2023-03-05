@@ -51,11 +51,13 @@ public abstract class Integrator {
 	/**
 	 * Tabulate the integrand as well as the integral at given points
 	 * @param integrand, the integrand function
+	 * @param numIntervals, the number on intervals for the integral approximation
 	 * @param points, array of values of the independent variable
 	 * @param varyBoundary, which boundary of the integral to vary?
 	 * @param otherBoundary, fixed value for the other boundary
 	 */
-	public void tabulate(DoubleUnaryOperator integrand, double[] points, boundary varyBoundary, double otherBoundary) {
+	public void tabulate(DoubleUnaryOperator integrand, int numIntervals, 
+			double[] points, boundary varyBoundary, double otherBoundary) {
 		//TODO
 	}
 
@@ -103,15 +105,15 @@ public abstract class Integrator {
 		return intervals;
 	}
 	
-	//Tools for improper integrals. i.e. one or both boundaries are at infinity in principle
+	//Tools for tuning improper integrals. i.e. one or both boundaries are at infinity in principle.
 	
 	/**
-	 * Find the point that's closest enough to infinity for the difference between integral and
-	 * asymptote to vanish. Default asymptote is the line f(x) = 0.
-	 * We want the point "just" close enough, so as not to waste calculation time on intervals
-	 * where nothings is happening.
+	 * Tuning: find the point that's closest enough to infinity for the integral to vanish within a
+	 * given accuracy. We want the point "just" close enough, to avoid future wasting of calculation 
+	 * time on intervals where nothings is happening. So this procedure is deliberately wasteful to 
+	 * avoid future waste!
 	 * @param function, the function to integrate
-	 * @param asymptote, the asymptote that the integral approaches, or null for the default
+	 * @param numIntervals, the number on intervals for the integral approximation
 	 * @param whichSide, at which side are we investigating the vanish point?
 	 * @param safeValue,  a value for the boundary that's surely far enough to the left or right
 	 * @param initialValue, initial, surely UN-safe value for the boundary
@@ -120,9 +122,19 @@ public abstract class Integrator {
 	 * @param verbose, do we want a table of attempts printed? 
 	 * @return first point where criterion was met, going from unsafe to safe with given step size
 	 */
-	public double vanishes(DoubleUnaryOperator function, DoubleUnaryOperator asymptote, 
+	public double vanishes(DoubleUnaryOperator function, int numIntervals, 
 			boundary whichSide, double safeValue, double initialValue, double stepSize, double criterion,
 			boolean verbose) {
+		//TODO
+		return 0;
+	}
+	
+	//Tools for testing limiting behavior on either side
+	
+	public double asymptoteReached(DoubleUnaryOperator function, int numIntervals, 
+			DoubleUnaryOperator asymptote, boundary whichSide, double initialValue, double stepSize,
+			double otherBoundary, double criterion, boolean verbose
+			) {
 		//TODO
 		return 0;
 	}
