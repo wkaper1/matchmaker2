@@ -2,6 +2,7 @@ package nl.uva.science.esc.math.integration;
 
 import java.util.function.DoubleUnaryOperator;
 
+import nl.uva.science.esc.math.integration.Integrator.boundary;
 import nl.uva.science.esc.math.integration.Integrator.method;
 import nl.uva.science.esc.statistics.distributionsequal.StudentizedRangeDistribution;
 
@@ -24,32 +25,16 @@ public class TestIntegrator {
 		
 		//Evaluate the function to integrate to check the curve
 		System.out.println("The function to integrate: CumulativeProbabilityNormalDistribution");
-		System.out.println("x, P(x)");
-		for(int i=0; i<points.length; i++) {
-			double Px = function.applyAsDouble(points[i]);
-			System.out.print(points[i]);
-			System.out.print(", ");
-			System.out.println(Px);
-		}
-		System.out.println();
-		
 		System.out.println("Explore integral from minus infinity (=-100), numIntervals high (320)");
-		System.out.println("x, Integral(P(x), a, b)");
-		for(int i=0; i<points.length; i++) {
-			double approx = int2.integrate(function, -100, points[i], 320);
-			System.out.print(points[i]);
-			System.out.print(", ");
-			System.out.println(approx);			
-		}
 		System.out.println();
+		int2.tabulate(function, 320, points, boundary.UPPER, -100);
 		
-		System.out.println("Decisions: we're accurate in 7 decimals, so -6 to 6 is the interesting range.");
-		System.out.println("Minus infinity lowerbound can be approximated by -6.");
-		System.out.println("To the left of -6 the integral is indistinguishable from 0");
-		System.out.println("To the right of +6 the integral is indistinguishable from the line f(x)=x");
+		System.out.println("We're accurate in 7 decimals, so it seems -5 to 5 is the interesting range.");
+		System.out.println("To the left the integral seems near to zero.");
+		System.out.println("To the tight, the line y = x appears as asymptote.");
+		System.out.println("Let's first tune the number of intervals for a few points in the interesting range.");
 		System.out.println();
-		
-		//Try the tuning on a chosen point for both methods
+
 		System.out.println("Tuning numIntervals for -0.5, Trapezoidal rule");
 		int1.tuneIntervals(function, -6, -0.5, 8, 2, 1E-7, 2, true);
 		System.out.println();
@@ -75,5 +60,19 @@ public class TestIntegrator {
 		System.out.println();		
 
 		System.out.println("Decision: choose Simpson's with 256 intervals");
+		System.out.println();		
+
+		System.out.println("We want to integrate from minus infinity, how far to the left should we really start?");
+		int2.vanishes(function, 256, boundary.LOWER, -100, -4.5, 0.5, 1E-7, true);
+
+		System.out.println("At what point to the right can we safely replace the integral by the asymptote y = x?");
+		int2.asymptoteReached(function, 256, (x) -> x, boundary.UPPER, 4.5, 0.5, -7, 1E-7, true);
+		
+		System.out.println("Decisions: we're accurate in 7 decimals, so -5 to 5 is the interesting range.");
+		System.out.println("Minus infinity lowerbound can be approximated by -5.");
+		System.out.println("To the left of -5 the integral is indistinguishable from 0");
+		System.out.println("To the right of +5 the integral is indistinguishable from the line f(x)=x");
+		System.out.println();
+		
 	}
 }
