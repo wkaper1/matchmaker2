@@ -7,6 +7,7 @@ import java.util.function.DoubleUnaryOperator;
  * to integrate, the two boundaries and the number of (equal) sub-intervals to use in the approximation.
  * 
  * Subclasses exist for various methods of numerical integration.
+ * Tools to test and tune the integration method are added.
  * @author Wolter2
  *
  */
@@ -16,6 +17,8 @@ public abstract class Integrator {
 		TRAPEZOIDAL_RULE,
 		SIMPSONS_RULE
 	}
+	
+	public enum boundary { LEFT, RIGHT }
 	
 	public static final method defaultMethod = method.SIMPSONS_RULE;
 	
@@ -43,6 +46,17 @@ public abstract class Integrator {
 	 */
 	public static Integrator Create() {
 		return Create(defaultMethod);
+	}
+
+	/**
+	 * Tabulate the integrand as well as the integral at given points
+	 * @param integrand, the integrand function
+	 * @param points, array of values of the independent variable
+	 * @param varyBoundary, which boundary of the integral to vary?
+	 * @param otherBoundary, fixed value for the other boundary
+	 */
+	public void tabulate(DoubleUnaryOperator integrand, double[] points, boundary varyBoundary, double otherBoundary) {
+		//TODO
 	}
 
 	/**
@@ -87,5 +101,29 @@ public abstract class Integrator {
 			prevApprox = approx;
 		}
 		return intervals;
-	}	
+	}
+	
+	//Tools for improper integrals. i.e. one or both boundaries are at infinity in principle
+	
+	/**
+	 * Find the point that's closest enough to infinity for the difference between integral and
+	 * asymptote to vanish. Default asymptote is the line f(x) = 0.
+	 * We want the point "just" close enough, so as not to waste calculation time on intervals
+	 * where nothings is happening.
+	 * @param function, the function to integrate
+	 * @param asymptote, the asymptote that the integral approaches, or null for the default
+	 * @param whichSide, at which side are we investigating the vanish point?
+	 * @param safeValue,  a value for the boundary that's surely far enough to the left or right
+	 * @param initialValue, initial, surely UN-safe value for the boundary
+	 * @param stepSize, absolute value of the desired step size, going from safe to unsafe
+	 * @param criterion, difference with asymptote that's close enough to zero
+	 * @param verbose, do we want a table of attempts printed? 
+	 * @return first point where criterion was met, going from unsafe to safe with given step size
+	 */
+	public double vanishes(DoubleUnaryOperator function, DoubleUnaryOperator asymptote, 
+			boundary whichSide, double safeValue, double initialValue, double stepSize, double criterion,
+			boolean verbose) {
+		//TODO
+		return 0;
+	}
 }
