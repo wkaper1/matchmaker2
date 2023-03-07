@@ -116,6 +116,47 @@ public class myReflection {
 	}//end invokeStaticMethod
 	
 	/**
+	 * Invoke a static method
+	 * @param method, Method object, provide it if you have it
+	 * @param args, an array containing the arguments
+	 * @return
+	 */
+	@SuppressWarnings("rawtypes")
+	public static Object invokeStaticMethod(Method method, Object[] args) {
+		Object o = null;
+		try {
+			o = method.invoke(null, args);
+		} catch (
+			Exception e
+		) {
+			e.printStackTrace();
+		}//end try
+		return o;		
+	}//end invokeStaticMethod
+	
+	/**
+	 * Invoke a method on an instance
+	 * @param instance, the instance to invoke the method on
+	 * @param method, a method object that you can find using reflection (see above)
+	 * @param args, an array containing the arguments
+	 * @return
+	 */
+	@SuppressWarnings("rawtypes")
+	public static Object invokeInstanceMethod(
+			Object instance, Method method, Object[] args
+	) {
+		Object o = null;
+		try {
+			o = method.invoke(instance, args);
+		} catch (
+			Exception e
+		) {
+			e.printStackTrace();
+		}//end try
+		return o;				
+	}
+		
+	/**
 	 * Instantiate a class
 	 * @param classname, name of class to instantiate
 	 * @param argtypes, array of Class objects describing the constructor signature
