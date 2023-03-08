@@ -45,22 +45,6 @@ public class Tabulator {
 		ALL_COMBINATIONS_ZIGZAG
 	}
 	
-	/**
-	 * Supported parameter types, for methods to be tabulated.
-	 * The methods should have parameters of these and only these types
-	 * @author wkaper1
-	 */
-	public enum ParameterType {
-		/**
-		 * The long primitive type
-		 */
-		LONG,
-		/**
-		 * The double primitive type 
-		 */
-		DOUBLE
-	}
-	
 	private Method method;          //the method to tabluate, as found by reflection, not yet attached to an instance
 	private Object instance;        //the object instance we want to invoke the method for (ignored for static methods)
 	private String[] variableNames; //variable names in order of appearance in method invocation
@@ -150,12 +134,11 @@ public class Tabulator {
 		case ALL_COMBINATIONS_ZIGZAG: 
 			tabulateAllCombinationsZigzag();
 		}
+		System.out.println(); //white line to signal end-of-table
 	}
 	
 	private void tabulateOnePassPerVariable() {
 		Object[] variables = new Object[variableTypes.length];
-		int currentVariableChanging = 0;
-		int index = 0;
 		//Init the variables
 		for (int i=1; i<variableTypes.length; i++) {
 			int mid = (getVariableValuesLength(i) - 1) / 2; //find the mid point (uneven) or just below (even)
