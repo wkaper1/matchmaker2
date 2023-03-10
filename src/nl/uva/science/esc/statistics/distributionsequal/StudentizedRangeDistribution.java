@@ -7,7 +7,7 @@ import nl.uva.science.esc.math.integration.Integrator.boundary;
 import nl.uva.science.esc.math.integration.Integrator.method;
 
 /**
- * Static functions involved in calculation the cumulative probability for the Studentized
+ * Static functions involved in calculating the cumulative probability for the Studentized
  * Range Distribution as used in Tukey's Honestly Significant Difference test.
  * 
  * See: https://en.wikipedia.org/wiki/Studentized_range_distribution
@@ -59,11 +59,12 @@ public class StudentizedRangeDistribution {
 	
 	/**
 	 * Integrand of "middle integral", it calls the inner integral.
+	 * [The method needs to be public when tuning it! Make it private afterwards?]
 	 * @param n, number of treatments compared
 	 * @param t, integration variable for the outer integral (see next method)
 	 * @param u, integration variable for this middle integral
 	 */
-	private static double MiddleIntegrand(int n, double t, double u) {
+	public static double MiddleIntegrand(int n, double t, double u) {
 		double z = Math.exp(-u * u /2) / sqrtTwoPi;
 		double diff = CumulativeProbabilityNormalDistribution(u + t)
 				- CumulativeProbabilityNormalDistribution(u);
@@ -72,12 +73,13 @@ public class StudentizedRangeDistribution {
 
 	/**
 	 * Integrand of the "outer integral", it contains calculation of the middle integral
+	 * [The method needs to be public when tuning it! Make it private afterwards?]
 	 * @param n, number of treatments compared
 	 * @param df, degrees of freedom of the error variance
 	 * @param q, studentized range statistic
 	 * @param t, integration variable for this outer integral
 	 */
-	private static double OuterIntegrand(int n, int df, double q, double t) {
+	public static double OuterIntegrand(int n, int df, double q, double t) {
 		DoubleUnaryOperator f = (u) -> MiddleIntegrand(n, t, u);
 		double Pnt = n * int1.integrate(f, -7, 4, 256);    //TODO: tune this integral!
 		double tq = t / q;

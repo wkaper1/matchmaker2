@@ -44,13 +44,16 @@ public class Tabulator {
 		 */
 		ALL_COMBINATIONS_ZIGZAG
 	}
-	
-	private Method method;          //the method to tabluate, as found by reflection, not yet attached to an instance
+
+	private Class cls;              //the class that contains the method to tabulate
+	private String methodname;      //the name of the method to tabulate... needed till we find the Method itself
+	private Method method;          //the method to tabulate, as found by reflection, not yet attached to an instance
 	private Object instance;        //the object instance we want to invoke the method for (ignored for static methods)
 	private String[] variableNames; //variable names in order of appearance in method invocation
 	private Class[] variableTypes;  //corresponding types, same order as the names
-	//2 arays, together stating for each variable the array of values to use in tabulation
+	//3 arrays, together stating for each variable the array of values to use in tabulation
 	//first dimension: variable index, same order as above; second dimension: value index; these arrays are ragged
+	private int[][] valuesInt;
 	private long[][] valuesLong;
 	private double[][] valuesDouble;
 
@@ -58,28 +61,41 @@ public class Tabulator {
 	 * Load a static method for tabulation.
 	 * @throws Exception 
 	 */
-	public Tabulator(String classname, String methodname) {
-		this.method = myReflection.getMethod(classname, methodname);
-		common();
+	public Tabulator(String classname, String methodname, int numvars) {
+		this.cls = myReflection.getClass(classname);
+		this.methodname = methodname;
+		common(numvars);
 	}
 	
 	/**
 	 * Load an instance method for tabulation.
 	 * @throws Exception 
 	 */
-	public Tabulator(Object instance, String methodname) {
+	public Tabulator(Object instance, String methodname, int numvars) {
 		this.instance = instance;
-		this.method = myReflection.getMethodFromClass(instance.getClass(), methodname);
-		common();
+		this.cls = instance.getClass();
+		this.methodname = methodname;
+		common(numvars);
 	}
 	
-	private void common() {
-		this.variableTypes = method.getParameterTypes();
-		this.variableNames = new String[variableTypes.length];
-		this.valuesLong = new long[variableTypes.length][];
-		this.valuesDouble = new double[variableTypes.length][];
+	private void common(int numvars) {
+		this.variableNames = new String[numvars];
+		this.variableTypes = new Class[numvars];
+		this.valuesInt = new int[numvars][];
+		this.valuesLong = new long[numvars][];
+		this.valuesDouble = new double[numvars][];
 	}
 	
+	/**
+	 * Declare an int variable, mentioning the set of values you want to tabulate for that variable, 
+	 * and also the index position in the method invocation (0 = first)
+	 * @throws Exception 
+	 */
+	public void declareVariableInt(int index, String name, int[] values) throws Exception {
+		valuesInt[index] = values;
+		finishDeclare(index, name, int.class);
+	}
+
 	/**
 	 * Declare a long variable, mentioning the set of values you want to tabulate for that variable, 
 	 * and also the index position in the method invocation (0 = first)
@@ -102,17 +118,16 @@ public class Tabulator {
 	
 	private void finishDeclare(int index, String name, Class cls) throws Exception {
 		variableNames[index] = name;
-		if (! variableTypes[index].equals(cls)) {
-			throw new Exception("Type found by reflection for index " + index + " is not " + cls.getName());
-		}
+		variableTypes[index] = cls;
 	}
 	
 	private void checkDeclare() throws Exception {
 		for (int i=0; i<variableNames.length; i++) {
 			if (! (variableNames[i].length() > 0)) {
-				throw new Exception("Not all parameters found by reflection were declared. Missing declaration for index " + i);
+				throw new Exception("The variables array has a gap at position " + i);
 			}
 		}
+		this.method = myReflection.getMethodFromClass(cls, methodname, variableTypes);
 	}
 
 	/**

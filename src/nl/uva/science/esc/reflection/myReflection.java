@@ -45,13 +45,14 @@ public class myReflection {
 	 * Get a method object given method name and Class object
 	 * @param cls
 	 * @param methodname
+	 * @param argtypes, for each of the arguments a Class object that describes their type
 	 * @return
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static Method getMethodFromClass(Class cls, String methodname) {
+	public static Method getMethodFromClass(Class cls, String methodname, Class[] argtypes) {
 		Method m = null;
 		try {
-			m = cls.getMethod(methodname);
+			m = cls.getMethod(methodname, argtypes);
 		} catch (NoSuchMethodException e) {
 			e.printStackTrace();
 		} catch (SecurityException e) {
@@ -83,12 +84,13 @@ public class myReflection {
 	 * Convenience: get a Method object given class and method names
 	 * @param classname
 	 * @param methodname
+	 * @param argtypes, for each of the arguments a Class object that describes their type
 	 * @return
 	 */
 	@SuppressWarnings("rawtypes")
-	public static Method getMethod(String classname, String methodname) {
+	public static Method getMethod(String classname, String methodname, Class[] argtypes) {
 		Class cls = getClass(classname);
-		return getMethodFromClass(cls, methodname);
+		return getMethodFromClass(cls, methodname, argtypes);
 	}//end getMethod
 		
 	/**
@@ -103,7 +105,11 @@ public class myReflection {
 		String classname, String methodname, Object[] args
 	) {
 		Class cls = getClass(classname);
-		Method m = getMethodFromClass(cls, methodname);		
+		Class[] types = new Class[args.length];
+		for (int i=0; i<args.length; i++) {
+			types[i] = args.getClass();
+		}
+		Method m = getMethodFromClass(cls, methodname, types);		
 		Object o = null;
 		try {
 			o = m.invoke(null, args);
