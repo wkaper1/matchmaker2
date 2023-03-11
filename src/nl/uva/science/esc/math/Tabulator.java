@@ -213,7 +213,10 @@ public class Tabulator {
 	}
 
 	private Object getVariableValue(int variableIndex, int valueIndex) {
-		if (variableTypes[variableIndex] == long.class)	{
+		if (variableTypes[variableIndex] == int.class) {
+			return (Object) valuesInt[variableIndex][valueIndex];
+		}
+		else if (variableTypes[variableIndex] == long.class)	{
 			return (Object)valuesLong[variableIndex][valueIndex];
 		}
 		else {
@@ -222,7 +225,10 @@ public class Tabulator {
 	}
 	
 	private int getVariableValuesLength(int variableIndex) {
-		if (variableTypes[variableIndex] == long.class)	{
+		if (variableTypes[variableIndex] == int.class) {
+			return valuesInt[variableIndex].length;
+		}
+		else if (variableTypes[variableIndex] == long.class)	{
 			return valuesLong[variableIndex].length;
 		}
 		else {
