@@ -5,6 +5,11 @@ import java.math.BigInteger;
 public class TestFactorials {
 
 	public static void main(String[] args) {
+		double rs9 = Factorials.gammaFactor(2);
+		rs9 = Factorials.gammaFactor(3);
+		rs9 = Factorials.gammaFactor(4);
+		
+		//And now the full test
 		BigInteger rs;
 		for (int n=100; n>0; n--) {
 			rs = Factorials.factorial(n);

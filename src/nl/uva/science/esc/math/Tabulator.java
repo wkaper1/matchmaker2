@@ -140,6 +140,7 @@ public class Tabulator {
 		//print table headings
 		for (int i=0; i<variableNames.length; i++) {
 			System.out.print(variableNames[i]);
+			System.out.print(", ");
 		}
 		System.out.println("function value");
 		switch (scheme) {
