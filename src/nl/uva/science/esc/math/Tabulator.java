@@ -188,28 +188,28 @@ public class Tabulator {
 			//get the next combination of indices and variable values
 			boolean next = false;
 			int varIndex = 0;
-			while (!next) {
+			while (!next && !atEnd) {
+				indices[varIndex]++;
 				if (indices[varIndex] < getVariableValuesLength(varIndex)) {
-					indices[varIndex]++;
 					variables[varIndex] = getVariableValue(varIndex, indices[varIndex]);
 					next = true;
 				}
 				else {
 					next = false;
+					//Try choose the next variables index for increasing
+					varIndex++;
 					if (varIndex < variableTypes.length) {
-						//choose the next variables index for increasing, reset all lower numbered ones
-						varIndex++;
+						//success: reset all lower numbered variable indices
 						for (int i=0; i<varIndex; i++) {
 							indices[i] = 0;
 							variables[i] = getVariableValue(i, 0);
 						}
 					}
 					else {
-						atEnd = true;
+						atEnd = true; //there are no more variable indices to increase
 					}
 				}
 			}
-			
 		}
 	}
 
