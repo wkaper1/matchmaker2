@@ -51,11 +51,10 @@ public class Tabulator {
 	private Object instance;        //the object instance we want to invoke the method for (ignored for static methods)
 	private String[] variableNames; //variable names in order of appearance in method invocation
 	private Class[] variableTypes;  //corresponding types, same order as the names
-	//3 arrays, together stating for each variable the array of values to use in tabulation
-	//first dimension: variable index, same order as above; second dimension: value index; these arrays are ragged
-	private int[][] valuesInt;
-	private long[][] valuesLong;
-	private double[][] valuesDouble;
+	//2D array, stating for each variable the array of values to use in tabulation
+	//the type is Object[] because we use reflection, however each variable SHOULD have the type required by variableTypes
+	//first dimension: variable index, same order as above; second dimension: value index; the array is ragged
+	private Object[][] values;
 
 	/**
 	 * Load a static method for tabulation.
@@ -81,9 +80,7 @@ public class Tabulator {
 	private void common(int numvars) {
 		this.variableNames = new String[numvars];
 		this.variableTypes = new Class[numvars];
-		this.valuesInt = new int[numvars][];
-		this.valuesLong = new long[numvars][];
-		this.valuesDouble = new double[numvars][];
+		this.values = new Object[numvars][];
 	}
 	
 	/**
@@ -92,7 +89,10 @@ public class Tabulator {
 	 * @throws Exception 
 	 */
 	public void declareVariableInt(int index, String name, int[] values) throws Exception {
-		valuesInt[index] = values;
+		this.values[index] = new Object[values.length];
+		for (int i=0; i<values.length; i++) {
+			this.values[index][i] = (Object)values[i];
+		}
 		finishDeclare(index, name, int.class);
 	}
 
@@ -102,7 +102,10 @@ public class Tabulator {
 	 * @throws Exception 
 	 */
 	public void declareVariableLong(int index, String name, long[] values) throws Exception {
-		valuesLong[index] = values;
+		this.values[index] = new Object[values.length];
+		for (int i=0; i<values.length; i++) {
+			this.values[index][i] = (Object)values[i];
+		}
 		finishDeclare(index, name, long.class);
 	}
 
@@ -112,7 +115,10 @@ public class Tabulator {
 	 * @throws Exception 
 	 */
 	public void declareVariableDouble(int index, String name, double[] values) throws Exception {
-		valuesDouble[index] = values;
+		this.values[index] = new Object[values.length];
+		for (int i=0; i<values.length; i++) {
+			this.values[index][i] = (Object)values[i];
+		}
 		finishDeclare(index, name, double.class);
 	}
 	
@@ -157,19 +163,19 @@ public class Tabulator {
 		Object[] variables = new Object[variableTypes.length];
 		//Init the variables
 		for (int i=1; i<variableTypes.length; i++) {
-			int mid = (getVariableValuesLength(i) - 1) / 2; //find the mid point (uneven) or just below (even)
-			variables[i] = getVariableValue(i, mid);
+			int mid = (values[i].length - 1) / 2; //find the mid point (uneven) or just below (even)
+			variables[i] = values[i][mid];
 		}
 		//Do the looping
 		for (int i=0; i<variableTypes.length; i++) {
 			//Do the single pass for variable i, visiting each of its values once
-			for (int j=0; j<getVariableValuesLength(i); j++) {
-				variables[i] = getVariableValue(i, j);
+			for (int j=0; j<values[i].length; j++) {
+				variables[i] = values[i][j];
 				invokeAndPrintline(variables); //Do it!
 			}
 			//put variable i back to the mid position
-			int mid = (getVariableValuesLength(i) - 1) / 2;
-			variables[i] = getVariableValue(i, mid);
+			int mid = (values[i].length - 1) / 2;
+			variables[i] = values[i][mid];
 		}
 	}
 	
@@ -179,7 +185,7 @@ public class Tabulator {
 		Arrays.fill(indices, 0);
 		//Init the variables
 		for (int i=0; i<variableTypes.length; i++) {
-			variables[i] = getVariableValue(i, 0);
+			variables[i] = values[i][0];
 		}
 		//Do the looping
 		boolean atEnd = false;
@@ -190,8 +196,8 @@ public class Tabulator {
 			int varIndex = 0;
 			while (!next && !atEnd) {
 				indices[varIndex]++;
-				if (indices[varIndex] < getVariableValuesLength(varIndex)) {
-					variables[varIndex] = getVariableValue(varIndex, indices[varIndex]);
+				if (indices[varIndex] < values[varIndex].length) {
+					variables[varIndex] = values[varIndex][indices[varIndex]];
 					next = true;
 				}
 				else {
@@ -202,7 +208,7 @@ public class Tabulator {
 						//success: reset all lower numbered variable indices
 						for (int i=0; i<varIndex; i++) {
 							indices[i] = 0;
-							variables[i] = getVariableValue(i, 0);
+							variables[i] = values[i][0];
 						}
 					}
 					else {
@@ -213,30 +219,6 @@ public class Tabulator {
 		}
 	}
 
-	private Object getVariableValue(int variableIndex, int valueIndex) {
-		if (variableTypes[variableIndex] == int.class) {
-			return (Object) valuesInt[variableIndex][valueIndex];
-		}
-		else if (variableTypes[variableIndex] == long.class)	{
-			return (Object)valuesLong[variableIndex][valueIndex];
-		}
-		else {
-			return (Object)valuesDouble[variableIndex][valueIndex];
-		}
-	}
-	
-	private int getVariableValuesLength(int variableIndex) {
-		if (variableTypes[variableIndex] == int.class) {
-			return valuesInt[variableIndex].length;
-		}
-		else if (variableTypes[variableIndex] == long.class)	{
-			return valuesLong[variableIndex].length;
-		}
-		else {
-			return valuesDouble[variableIndex].length;
-		}
-	}
-	
 	private void invokeAndPrintline(Object[] args) {
 		double functionValue;
 		if (instance != null) {
