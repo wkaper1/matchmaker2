@@ -30,7 +30,7 @@ public class Tabulator {
 	}
 
 	/**
-	 * Scheme for generating the combinations of variable values to tabulate
+	 * Scheme for generating the combinations of variable values to tabulate, in case of 2 or more variables
 	 * @author Wolter2
 	 */
 	public enum VariationScheme {
@@ -55,7 +55,11 @@ public class Tabulator {
 	//the type is Object[] because we use reflection, however each variable SHOULD have the type required by variableTypes
 	//first dimension: variable index, same order as above; second dimension: value index; the array is ragged
 	private Object[][] values;
-
+	
+	//optional feature: Transformation to perform on the function before tabulating it.
+	private Transformation transformation; 
+	private int transformVariable;  //index of the single variable involved in the transformation
+	
 	/**
 	 * Load a static method for tabulation.
 	 * @throws Exception 
@@ -81,6 +85,7 @@ public class Tabulator {
 		this.variableNames = new String[numvars];
 		this.variableTypes = new Class[numvars];
 		this.values = new Object[numvars][];
+		this.transformation = null;
 	}
 	
 	/**
@@ -134,6 +139,14 @@ public class Tabulator {
 			}
 		}
 		this.method = myReflection.getMethodFromClass(cls, methodname, variableTypes);
+	}
+	
+	/**
+	 * Set a transformation to perform on the function before tabulating
+	 */
+	public void setTransformation(Transformation transformation, int transformVariable) {
+		this.transformation = transformation;
+		this.transformVariable = transformVariable;
 	}
 
 	/**
@@ -221,16 +234,28 @@ public class Tabulator {
 
 	private void invokeAndPrintline(Object[] args) {
 		double functionValue;
-		if (instance != null) {
-			functionValue = (double)myReflection.invokeInstanceMethod(instance, method, args);
+		if (transformation == null) {
+			if (instance != null) {
+				functionValue = (double)myReflection.invokeInstanceMethod(instance, method, args);
+			}
+			else {
+				functionValue = (double)myReflection.invokeStaticMethod(method, args);
+			}			
 		}
 		else {
-			functionValue = (double)myReflection.invokeStaticMethod(method, args);
+			functionValue = invokeWithTransformation(args);
 		}
+		
+		//print line
 		for (int i=0; i<args.length; i++) {
 			System.out.print(args[i]);
 			System.out.print(", ");
 		}
 		System.out.println(functionValue);
+	}
+	
+	private double invokeWithTransformation(Object[] args) {
+		//TODO
+		return 0;
 	}
 }
