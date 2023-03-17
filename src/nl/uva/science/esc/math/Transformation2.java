@@ -8,16 +8,17 @@ import java.util.function.DoubleUnaryOperator;
  * 
  * This is currently limited to transformations of functions of 1 variable.
  * The single variable must be a double and the output will also be a double.
+ * Create the single variable function using SingleParameterMask on an existing multi-parameter method. Not that fast nut more flexible. 
  * @author Wolter2
  */
-public interface Transformation {
+public interface Transformation2 {
 
 	/**
 	 * Get a return value for the transformed function F, given f and x'
 	 * @param f, the function of one variable to transform
 	 * @param x, the value of x for which to evaluate the big F
 	 */
-	public double run(DoubleUnaryOperator f, double x);
+	public double run(SingleParameterMask f, double x);
 	
 	/**
 	 * Does the result of this Transformation depend on x?

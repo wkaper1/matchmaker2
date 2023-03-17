@@ -1,6 +1,6 @@
 package nl.uva.science.esc.math.integration;
 
-import java.util.function.DoubleUnaryOperator;
+import nl.uva.science.esc.math.SingleParameterMask;
 
 public class IntegratorTuneIntervals extends IntegratorTuner {
 	private double lowerbound;
@@ -10,7 +10,7 @@ public class IntegratorTuneIntervals extends IntegratorTuner {
 	private double convergenceCriterion;
 	private int convergenceRepetitions;
 	
-	public IntegratorTuneIntervals(Integrator int1, double lowerbound, double upperbound, 
+	public IntegratorTuneIntervals(IntegratorMultiTunable int1, double lowerbound, double upperbound, 
 			int initialIntervals, int growFactor, double convergenceCriterion, int convergenceRepetitions) {
 		super(int1);
 		this.lowerbound = lowerbound;
@@ -22,7 +22,7 @@ public class IntegratorTuneIntervals extends IntegratorTuner {
 	}
 
 	@Override
-	public double run(DoubleUnaryOperator f, double x) {
+	public double run(SingleParameterMask f, double x) {
 		return int1.tuneIntervals(f, lowerbound, upperbound, 
 				initialIntervals, growFactor, convergenceCriterion, convergenceRepetitions, false);
 	}

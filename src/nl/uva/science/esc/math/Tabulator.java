@@ -57,7 +57,7 @@ public class Tabulator {
 	private Object[][] values;
 	
 	//optional feature: Transformation to perform on the function before tabulating it.
-	private Transformation transformation; 
+	private Transformation2 transformation; //we need the slower multi-parameter version here! 
 	private int transformVariable;  //index of the single variable involved in the transformation
 	
 	/**
@@ -144,7 +144,7 @@ public class Tabulator {
 	/**
 	 * Set a transformation to perform on the function before tabulating
 	 */
-	public void setTransformation(Transformation transformation, int transformVariable) {
+	public void setTransformation(Transformation2 transformation, int transformVariable) {
 		this.transformation = transformation;
 		this.transformVariable = transformVariable;
 	}
@@ -172,7 +172,7 @@ public class Tabulator {
 		System.out.println(); //white line to signal end-of-table
 	}
 	
-	private void tabulateOnePassPerVariable() {
+	private void tabulateOnePassPerVariable() throws Exception {
 		Object[] variables = new Object[variableTypes.length];
 		//Init the variables
 		for (int i=1; i<variableTypes.length; i++) {
@@ -192,7 +192,7 @@ public class Tabulator {
 		}
 	}
 	
-	private void tabulateAllCombinationsZigzag() {
+	private void tabulateAllCombinationsZigzag() throws Exception {
 		Object[] variables = new Object[variableTypes.length];
 		int[] indices = new int[variableTypes.length];
 		Arrays.fill(indices, 0);
@@ -232,7 +232,7 @@ public class Tabulator {
 		}
 	}
 
-	private void invokeAndPrintline(Object[] args) {
+	private void invokeAndPrintline(Object[] args) throws Exception {
 		double functionValue;
 		if (transformation == null) {
 			if (instance != null) {
@@ -254,8 +254,12 @@ public class Tabulator {
 		System.out.println(functionValue);
 	}
 	
-	private double invokeWithTransformation(Object[] args) {
-		//TODO
-		return 0;
+	private double invokeWithTransformation(Object[] args) throws Exception {
+		//Mask the method to tabulate as a single-variable function, using (temporarily) fixed values
+		SingleParameterMask fx = new SingleParameterMask(this.method, this.variableTypes);
+		fx.setCurrentVariable(transformVariable);
+		fx.setValues(args);
+		//Provide the single variable function to the Transformation, let it return a value
+		return transformation.run(fx, (double)args[transformVariable]);
 	}
 }
