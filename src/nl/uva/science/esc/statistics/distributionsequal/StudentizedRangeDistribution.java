@@ -138,11 +138,11 @@ public class StudentizedRangeDistribution {
 		System.out.println("Conclusion: trapezoidal rule gives quickest convergence, 64 intervals is more than adequate.");
 		System.out.println();
 		
-		//TODO 1: do something to estimate the parameters influence?
+		System.out.println("Investigate influence of parameters (n, t) on results like te above.");
+		System.out.println("All the below done with trapezoidal rule - should we try the other too?");
 		IntegratorMultiTunable int3 = IntegratorMultiTunable.Create(
 				IntegratorMultiTunable.method.TRAPEZOIDAL_RULE);
-		//Testing the multi-parameter version of findVanishPoints as preparation for real investigation
-		//Lower boundary
+		System.out.println("Left boundary (approx. for minus infinity), dependence on n and t.");
 		IntegratorTuner findVanishPL = int3.CreateFindVanishPointMulti(1024, 
 				IntegratorMultiTunable.boundary.LOWER, -10.0, -2.5, 0.5, 1E-8);
 		Tabulator tab1 = new Tabulator(StudentizedRangeDistribution.class, "MiddleIntegrand", 3, false);
@@ -152,16 +152,18 @@ public class StudentizedRangeDistribution {
 		tab1.setTransformation(findVanishPL, 2);                  //tell Tabulator that variable 2 is involved in the transformation
 		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);
 		
-		//Upper boundary
+		System.out.println("Right boundary (approx. for plus infinity), dependence on n and t.");
 		IntegratorTuner findVanishPH = int3.CreateFindVanishPointMulti(1024, 
 				IntegratorMultiTunable.boundary.UPPER, +6.0, +1.5, 0.5, 1E-8);
 		tab1.setTransformation(findVanishPH, 2);
 		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);
 		
-		//Testing the multi-parameter version of tuneIntervals as preparation for real investigation
+		System.out.println("Number of intervals needed for 7 decimals accuracy, dependence on n and t.");
+		System.out.println("Scheme: one pass through the middle for each variable.");
 		IntegratorTuner tuneIntervals = int3.CreateTuneIntervalsMulti(-3.5, 3.0, 8, 2, 1E-8, 2);
 		tab1.setTransformation(tuneIntervals, 2);                //tell Tabulator that variable 2 is involved in the transformation
 		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);
+		System.out.println("Scheme: cartesian product.");
 		tab1.tabulate(VariationScheme.ALL_COMBINATIONS_ZIGZAG);
 		
 		//TODO 2: on to the outer integral where the parameters DO play a role according to the Fortran authors. But they do not state which role.
