@@ -10,6 +10,7 @@ import nl.uva.science.esc.reflection.myReflection;
  * The values of the independent variable(s) to tabulate are given as long[] or double[] arrays
  * @author Wolter2
  */
+@SuppressWarnings("rawtypes")
 public class Tabulator {
 	
 	/**
@@ -66,8 +67,15 @@ public class Tabulator {
 	 */
 	public Tabulator(String classname, String methodname, int numvars) {
 		this.cls = myReflection.getClass(classname);
-		this.methodname = methodname;
-		common(numvars);
+		common(methodname, numvars);
+	}
+
+	/**
+	 * Load a static method for tabulation.
+	 */
+	public Tabulator(Class cls, String methodname, int numvars) {
+		this.cls = cls;
+		common(methodname, numvars);
 	}
 	
 	/**
@@ -77,11 +85,11 @@ public class Tabulator {
 	public Tabulator(Object instance, String methodname, int numvars) {
 		this.instance = instance;
 		this.cls = instance.getClass();
-		this.methodname = methodname;
-		common(numvars);
+		common(methodname, numvars);
 	}
 	
-	private void common(int numvars) {
+	private void common(String methodname, int numvars) {
+		this.methodname = methodname;
 		this.variableNames = new String[numvars];
 		this.variableTypes = new Class[numvars];
 		this.values = new Object[numvars][];

@@ -2,9 +2,12 @@ package nl.uva.science.esc.statistics.distributionsequal;
 
 import java.util.function.DoubleUnaryOperator;
 
-import nl.uva.science.esc.math.integration.Integrator;
-import nl.uva.science.esc.math.integration.Integrator.boundary;
+import nl.uva.science.esc.math.SingleParameterMask;
+import nl.uva.science.esc.math.Tabulator;
+import nl.uva.science.esc.math.Tabulator.VariationScheme;
+import nl.uva.science.esc.math.integration.*;
 import nl.uva.science.esc.math.integration.Integrator.method;
+import nl.uva.science.esc.math.integration.Integrator.boundary;
 
 /**
  * Static functions involved in calculating the cumulative probability for the Studentized
@@ -106,8 +109,9 @@ public class StudentizedRangeDistribution {
 	 * Run the tuning tests for the middle and outer integrals and show the results.
 	 * After incorporating the tuning results into the middle integral, repeat the tests
 	 * and finally incorporate the results into the outer integral.
+	 * @throws Exception 
 	 */
-	public static void tuningReport() {
+	public static void tuningReport() throws Exception {
 		Integrator int1 = Integrator.Create(method.TRAPEZOIDAL_RULE);
 		Integrator int2 = Integrator.Create();  //should be Simpson's
 		double points[] = new double[] {-10, -6, -5, -2, -0.5, -0.25, -0.1, 0, 0.1, 0.25, 0.5, 1, 2, 5, 10, 20};
@@ -118,7 +122,7 @@ public class StudentizedRangeDistribution {
 		System.out.println();
 		int n = 3;     //number of treatments
 		double t = 1;  //variable to integrate away in the outer integral...
-		   //0 or a big value for t make the integrand vanish...
+		   //0 or a big value for "t" make the integrand vanish...
 		   //what is the influence of these two? I'm relying on the Fortran guys saying they make no difference, mm...
 		DoubleUnaryOperator function = (u) -> MiddleIntegrand(n, t, u);
 		int2.tabulate(function, 516, points, boundary.UPPER, -10);
@@ -134,6 +138,18 @@ public class StudentizedRangeDistribution {
 		System.out.println("Conclusion: trapezoidal rule gives quickest convergence, 64 intervals is more than adequate.");
 		
 		//TODO 1: do something to estimate the parameters influence?
+		//Testing the multi-parameter version of tuneIntervals as preparation for real investigation
+		IntegratorMultiTunable int3 = IntegratorMultiTunable.Create(
+				IntegratorMultiTunable.method.TRAPEZOIDAL_RULE);
+		IntegratorTuner tuneIntervals = int3.CreateTuneIntervalsMulti(-3.5, 3.0, 8, 2, 1E-8, 2);
+		Tabulator tab1 = new Tabulator(StudentizedRangeDistribution.class, "MiddleIntegrand", 3);
+		tab1.declareVariableInt(0, "n", new int[] {2, 3, 10, 100});
+		tab1.declareVariableDouble(1, "t", new double[] {0.5, 1, 2, 5});
+		tab1.declareVariableDouble(2, "u", new double[] { 1 });  //dummy integration variable, value not used
+		tab1.setTransformation(tuneIntervals, 2);                //tell Tabulator that variable 2 is involved in the transformation
+		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);
+		tab1.tabulate(VariationScheme.ALL_COMBINATIONS_ZIGZAG);
+		
 		//TODO 2: on to the outer integral where the parameters DO play a role according to the Fortran authors. But they do not state which role.
 	}
 }

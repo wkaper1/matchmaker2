@@ -5,7 +5,7 @@ import nl.uva.science.esc.reflection.myReflection;
 
 /**
  * Replaces java.util.function.DoubleUnaryOperator for a specific case: you have a method that accepts multiple
- * parameters, returns double, and to want masquerade it as a function of one (double) variable, for the
+ * parameters, returns double, and you want masquerade it as a function of one (double) variable, for the
  * purpose of not burdening one-variable procedures with having to know all the parameters in order to make
  * the call. We replace all parameters except one (the "variable") by constant values, for a given period.
  * 
@@ -34,12 +34,27 @@ public class SingleParameterMask {
 		this.values = new Object[parameterTypes.length];
 		this.variableIndex = 0;
 	}
-	
+
+	/**
+	 * Shortcut constructor: Use this if the caller is using reflection itself and already has a 
+	 * Method method available
+	 */
 	public SingleParameterMask(Method method, Class[] parameterTypes) {
 		this.method = method;
 		this.parameterTypes = parameterTypes;
 		this.values = new Object[parameterTypes.length];
 		this.variableIndex = 0;
+	}
+	
+	/**
+	 * Shortcut: if you already have the Class at hand but not the method, use this one!
+	 */
+	public SingleParameterMask(Class cls, String methodname, Class[] parameterTypes) {
+		this.method = myReflection.getMethodFromClass(cls, methodname, parameterTypes);
+		this.parameterTypes = parameterTypes;
+		this.values = new Object[parameterTypes.length];
+		this.variableIndex = 0;
+		
 	}
 	
 	/**

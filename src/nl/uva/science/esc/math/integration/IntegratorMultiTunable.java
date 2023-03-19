@@ -240,4 +240,48 @@ public abstract class IntegratorMultiTunable {
 		double variedBound = (whichSide == boundary.LOWER) ? lowerBound : upperBound;
 		return variedBound;
 	}
+
+	/**
+	 * Return wrapped version of tuneIntervals method, to make it multi-parameter-tunable
+	 * The object returned has a "run" method you'll need to call repeatedly!
+	 */
+	public TuneIntervalsMulti CreateTuneIntervalsMulti(double lowerbound, double upperbound, 
+			int initialIntervals, int growFactor, double convergenceCriterion, int convergenceRepetitions) {
+		return new TuneIntervalsMulti(this, lowerbound, upperbound, initialIntervals, growFactor, 
+				convergenceCriterion, convergenceRepetitions);
+	}
+
+	/**
+	 * Wrapper class for TuneIntervals method, to make it multi-parameter-tunable
+	 */
+	public class TuneIntervalsMulti extends IntegratorTuner {
+		private double lowerbound;
+		private double upperbound; 
+		private int initialIntervals;
+		private int growFactor;
+		private double convergenceCriterion;
+		private int convergenceRepetitions;
+		
+		public TuneIntervalsMulti(IntegratorMultiTunable int1, double lowerbound, double upperbound, 
+				int initialIntervals, int growFactor, double convergenceCriterion, int convergenceRepetitions) {
+			super(int1);
+			this.lowerbound = lowerbound;
+			this.upperbound = upperbound;
+			this.initialIntervals = initialIntervals;
+			this.growFactor = growFactor;
+			this.convergenceCriterion = convergenceCriterion;
+			this.convergenceRepetitions = convergenceRepetitions;
+		}
+
+		@Override
+		public double run(SingleParameterMask f, double x) {
+			return int1.tuneIntervals(f, lowerbound, upperbound, 
+					initialIntervals, growFactor, convergenceCriterion, convergenceRepetitions, false);
+		}
+
+		@Override
+		public boolean isConstant() {
+			return true;
+		}
+	}//end innerclass	
 }
