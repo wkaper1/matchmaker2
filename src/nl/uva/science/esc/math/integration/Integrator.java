@@ -83,7 +83,8 @@ public abstract class Integrator {
 	) {
 		int converged = 0; //how many times in a row did we see the convergence criterion met?
 		int intervals = initialIntervals;
-		double prevApprox = -99999;   //just a strange unlikely value
+		int intervalsOK = 0;          //just a strange unlikely value
+		double prevApprox = -99999;   //idem
 		if (verbose) { //print headers for table
 			System.out.println("intervals, apptoximation, difference, converged");
 		}
@@ -92,6 +93,9 @@ public abstract class Integrator {
 			double diff = Math.abs(approx - prevApprox);
 			if (diff < convergenceCriterion) {
 				converged++;
+				if (converged == 1) {
+					intervalsOK = intervals;
+				}
 			}
 			else {
 				converged = 0;
@@ -114,7 +118,7 @@ public abstract class Integrator {
 		if (verbose) {
 			System.out.println();
 		}
-		return intervals;
+		return intervalsOK;
 	}
 	
 	//Tool for tuning improper integrals. i.e. one or both boundaries are at infinity in principle.

@@ -136,6 +136,7 @@ public class StudentizedRangeDistribution {
 		int1.tuneIntervals(function, -3.5, 3.0, 8, 2, 1E-8, 2, true);
 		int2.tuneIntervals(function, -3.5, 3.0, 8, 2, 1E-8, 2, true);
 		System.out.println("Conclusion: trapezoidal rule gives quickest convergence, 64 intervals is more than adequate.");
+		System.out.println();
 		
 		//TODO 1: do something to estimate the parameters influence?
 		//Testing the multi-parameter version of tuneIntervals as preparation for real investigation
