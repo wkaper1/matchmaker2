@@ -143,7 +143,7 @@ public class StudentizedRangeDistribution {
 		IntegratorMultiTunable int3 = IntegratorMultiTunable.Create(
 				IntegratorMultiTunable.method.TRAPEZOIDAL_RULE);
 		IntegratorTuner tuneIntervals = int3.CreateTuneIntervalsMulti(-3.5, 3.0, 8, 2, 1E-8, 2);
-		Tabulator tab1 = new Tabulator(StudentizedRangeDistribution.class, "MiddleIntegrand", 3);
+		Tabulator tab1 = new Tabulator(StudentizedRangeDistribution.class, "MiddleIntegrand", 3, false);
 		tab1.declareVariableInt(0, "n", new int[] {2, 3, 10, 100});
 		tab1.declareVariableDouble(1, "t", new double[] {0.5, 1, 2, 5});
 		tab1.declareVariableDouble(2, "u", new double[] { 1 });  //dummy integration variable, value not used

@@ -7,7 +7,7 @@ public class TestTabulator {
 	public static void main(String[] args) throws Exception {
 		Tabulator tab1 = new Tabulator(
 				"nl.uva.science.esc.statistics.distributionsequal.StudentizedRangeDistribution", 
-				"MiddleIntegrand", 3);
+				"MiddleIntegrand", 3, true);
 		tab1.declareVariableInt(0, "n", new int[] { 2, 3, 5 });
 		tab1.declareVariableDouble(1, "t", new double[] { 2, 10, 25 });
 		tab1.declareVariableDouble(2, "u", new double[] { 3, 11, 27 });

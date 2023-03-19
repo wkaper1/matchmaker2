@@ -52,6 +52,8 @@ public class Tabulator {
 	private Object instance;        //the object instance we want to invoke the method for (ignored for static methods)
 	private String[] variableNames; //variable names in order of appearance in method invocation
 	private Class[] variableTypes;  //corresponding types, same order as the names
+	private boolean[] variableVisible;//for each var: include it in table or not
+	private boolean showConstantVars; //shall we tabulate variables for which just 1 value was provided?
 	//2D array, stating for each variable the array of values to use in tabulation
 	//the type is Object[] because we use reflection, however each variable SHOULD have the type required by variableTypes
 	//first dimension: variable index, same order as above; second dimension: value index; the array is ragged
@@ -65,35 +67,37 @@ public class Tabulator {
 	 * Load a static method for tabulation.
 	 * @throws Exception 
 	 */
-	public Tabulator(String classname, String methodname, int numvars) {
+	public Tabulator(String classname, String methodname, int numvars, boolean showConstantVars) {
 		this.cls = myReflection.getClass(classname);
-		common(methodname, numvars);
+		common(methodname, numvars, showConstantVars);
 	}
 
 	/**
 	 * Load a static method for tabulation.
 	 */
-	public Tabulator(Class cls, String methodname, int numvars) {
+	public Tabulator(Class cls, String methodname, int numvars, boolean showConstantVars) {
 		this.cls = cls;
-		common(methodname, numvars);
+		common(methodname, numvars, showConstantVars);
 	}
 	
 	/**
 	 * Load an instance method for tabulation.
 	 * @throws Exception 
 	 */
-	public Tabulator(Object instance, String methodname, int numvars) {
+	public Tabulator(Object instance, String methodname, int numvars, boolean showConstantVars) {
 		this.instance = instance;
 		this.cls = instance.getClass();
-		common(methodname, numvars);
+		common(methodname, numvars, showConstantVars);
 	}
 	
-	private void common(String methodname, int numvars) {
+	private void common(String methodname, int numvars, boolean showConstantVars) {
 		this.methodname = methodname;
 		this.variableNames = new String[numvars];
 		this.variableTypes = new Class[numvars];
+		this.variableVisible = new boolean[numvars];
 		this.values = new Object[numvars][];
 		this.transformation = null;
+		this.showConstantVars = showConstantVars;
 	}
 	
 	/**
@@ -138,6 +142,10 @@ public class Tabulator {
 	private void finishDeclare(int index, String name, Class cls) throws Exception {
 		variableNames[index] = name;
 		variableTypes[index] = cls;
+		variableVisible[index] = (showConstantVars || values[index].length > 1);
+		if (values[index].length == 0) {
+			throw new Exception("Variable '" + name + "' was declared with zero values, please provide at least one.");
+		}
 	}
 	
 	private void checkDeclare() throws Exception {
@@ -155,6 +163,10 @@ public class Tabulator {
 	public void setTransformation(Transformation2 transformation, int transformVariable) {
 		this.transformation = transformation;
 		this.transformVariable = transformVariable;
+		if (transformation.isConstant() && values[transformVariable].length > 1) {
+			System.out.println("Warning: transformation is constant with respect to variable " + transformVariable + ", while multiple values were provided. Consider providing just 1 value, and not showing constant variables.");
+			System.out.println();
+		}
 	}
 
 	/**
@@ -166,8 +178,10 @@ public class Tabulator {
 		checkDeclare();
 		//print table headings
 		for (int i=0; i<variableNames.length; i++) {
-			System.out.print(variableNames[i]);
-			System.out.print(", ");
+			if (variableVisible[i]) {
+				System.out.print(variableNames[i]);
+				System.out.print(", ");				
+			}
 		}
 		System.out.println("function value");
 		switch (scheme) {
@@ -182,25 +196,29 @@ public class Tabulator {
 	
 	private void tabulateOnePassPerVariable() throws Exception {
 		Object[] variables = new Object[variableTypes.length];
-		//Init the variables
+		//Init the variables, including the invisible ones
 		for (int i=1; i<variableTypes.length; i++) {
 			int mid = (values[i].length - 1) / 2; //find the mid point (uneven) or just below (even)
 			variables[i] = values[i][mid];
 		}
-		//Do the looping
+		//Do the looping: do the single pass for each visible variable
 		for (int i=0; i<variableTypes.length; i++) {
-			//Do the single pass for variable i, visiting each of its values once
-			for (int j=0; j<values[i].length; j++) {
-				variables[i] = values[i][j];
-				invokeAndPrintline(variables); //Do it!
+			if (variableVisible[i]) {
+				//Do the single pass for variable i, visiting each of its values once
+				for (int j=0; j<values[i].length; j++) {
+					variables[i] = values[i][j];
+					invokeAndPrintline(variables); //Do it!
+				}
+				//put variable i back to the mid position
+				int mid = (values[i].length - 1) / 2;
+				variables[i] = values[i][mid];				
 			}
-			//put variable i back to the mid position
-			int mid = (values[i].length - 1) / 2;
-			variables[i] = values[i][mid];
 		}
 	}
 	
 	private void tabulateAllCombinationsZigzag() throws Exception {
+		//It is assumed that invisible variables are single valued
+		//  under that assumption we don't need to do anything special here, Cartesian product takes care of itself
 		Object[] variables = new Object[variableTypes.length];
 		int[] indices = new int[variableTypes.length];
 		Arrays.fill(indices, 0);
@@ -256,8 +274,10 @@ public class Tabulator {
 		
 		//print line
 		for (int i=0; i<args.length; i++) {
-			System.out.print(args[i]);
-			System.out.print(", ");
+			if (variableVisible[i]) {
+				System.out.print(args[i]);
+				System.out.print(", ");				
+			}
 		}
 		System.out.println(functionValue);
 	}
