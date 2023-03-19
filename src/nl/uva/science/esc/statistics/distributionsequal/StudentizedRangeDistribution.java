@@ -139,14 +139,27 @@ public class StudentizedRangeDistribution {
 		System.out.println();
 		
 		//TODO 1: do something to estimate the parameters influence?
-		//Testing the multi-parameter version of tuneIntervals as preparation for real investigation
 		IntegratorMultiTunable int3 = IntegratorMultiTunable.Create(
 				IntegratorMultiTunable.method.TRAPEZOIDAL_RULE);
-		IntegratorTuner tuneIntervals = int3.CreateTuneIntervalsMulti(-3.5, 3.0, 8, 2, 1E-8, 2);
+		//Testing the multi-parameter version of findVanishPoints as preparation for real investigation
+		//Lower boundary
+		IntegratorTuner findVanishPL = int3.CreateFindVanishPointMulti(1024, 
+				IntegratorMultiTunable.boundary.LOWER, -10.0, -2.5, 0.5, 1E-8);
 		Tabulator tab1 = new Tabulator(StudentizedRangeDistribution.class, "MiddleIntegrand", 3, false);
 		tab1.declareVariableInt(0, "n", new int[] {2, 3, 10, 100});
 		tab1.declareVariableDouble(1, "t", new double[] {0.5, 1, 2, 5});
 		tab1.declareVariableDouble(2, "u", new double[] { 1 });  //dummy integration variable, value not used
+		tab1.setTransformation(findVanishPL, 2);                  //tell Tabulator that variable 2 is involved in the transformation
+		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);
+		
+		//Upper boundary
+		IntegratorTuner findVanishPH = int3.CreateFindVanishPointMulti(1024, 
+				IntegratorMultiTunable.boundary.UPPER, +6.0, +1.5, 0.5, 1E-8);
+		tab1.setTransformation(findVanishPH, 2);
+		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);
+		
+		//Testing the multi-parameter version of tuneIntervals as preparation for real investigation
+		IntegratorTuner tuneIntervals = int3.CreateTuneIntervalsMulti(-3.5, 3.0, 8, 2, 1E-8, 2);
 		tab1.setTransformation(tuneIntervals, 2);                //tell Tabulator that variable 2 is involved in the transformation
 		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);
 		tab1.tabulate(VariationScheme.ALL_COMBINATIONS_ZIGZAG);

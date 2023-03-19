@@ -287,5 +287,47 @@ public abstract class IntegratorMultiTunable {
 		public boolean isConstant() {
 			return true;
 		}
-	}//end innerclass	
+	}//end innerclass
+	
+	/**
+	 * Return wrapped version of Vanishes method, to make it multi-parameter-tunable
+	 * The object returned has a "run" method you'll need to call repeatedly!
+	 */
+	public FindVanishPointMulti CreateFindVanishPointMulti(int numIntervals, 
+			boundary whichSide, double safeValue, double initialValue, double stepSize, double criterion) {
+		return new FindVanishPointMulti(this, numIntervals, whichSide, safeValue, initialValue, stepSize, criterion);
+	}
+	
+	/**
+	 * Wrapper class for Vanishes method, to make it multi-parameter-tunable
+	 */
+	public class FindVanishPointMulti extends IntegratorTuner {
+		private int numIntervals;
+		private boundary whichSide;
+		private double safeValue;
+		private double initialValue;
+		private double stepSize;
+		private double criterion;
+
+		public FindVanishPointMulti(IntegratorMultiTunable int1, int numIntervals, 
+				boundary whichSide, double safeValue, double initialValue, double stepSize, double criterion) {
+			super(int1);
+			this.numIntervals = numIntervals;
+			this.whichSide = whichSide;
+			this.safeValue = safeValue;
+			this.initialValue = initialValue;
+			this.stepSize = stepSize;
+			this.criterion = criterion;
+		}
+
+		@Override
+		public double run(SingleParameterMask f, double x) {
+			return int1.vanishes(f, numIntervals, whichSide, safeValue, initialValue, stepSize, criterion, false);
+		}
+
+		@Override
+		public boolean isConstant() {
+			return true;
+		}
+	}//end innerClass
 }
