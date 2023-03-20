@@ -118,7 +118,7 @@ public class StudentizedRangeDistribution {
 		
 		System.out.println("Tuning tests for: the middle integral");
 		System.out.println();
-		System.out.println("Explore integral from minus infinity (=-10), numIntervals high (516)");
+		System.out.println("Explore integrand and integral (n=3, t=1) from minus infinity (=-10), numIntervals high (516)");
 		System.out.println();
 		int n = 3;     //number of treatments
 		double t = 1;  //variable to integrate away in the outer integral...
@@ -127,6 +127,13 @@ public class StudentizedRangeDistribution {
 		DoubleUnaryOperator function = (u) -> MiddleIntegrand(n, t, u);
 		int2.tabulate(function, 516, points, boundary.UPPER, -10);
 		System.out.println("The integral rises from zero on the left up to a horizontal asymptote on the right.");
+		System.out.println("How does it look for n=3, t=50?");
+		DoubleUnaryOperator function2 = (u) -> MiddleIntegrand(n, 50, u);
+		int2.tabulate(function2, 516, points, boundary.UPPER, -10);
+		System.out.println("It seems like for high values of t, the integral is approacging 1/3 = 0.3333...");
+		System.out.println("We return to n=3, t=1.");
+		System.out.println();
+		
 		System.out.println("Determine boundaries on both sides that fit our accuracy of 7 decimals.");
 		System.out.println();
 		int2.vanishes(function, 516, boundary.LOWER, -10, -2.5, 0.5, 1E-8, true);
@@ -157,7 +164,7 @@ public class StudentizedRangeDistribution {
 				IntegratorMultiTunable.boundary.UPPER, +6.0, +1.5, 0.5, 1E-8);
 		tab1.setTransformation(findVanishPH, 2);
 		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);
-		System.out.println("Conclusion: enlarge boundaries, from -6.5 to +3.5 (or +4.5 if you want n=2");
+		System.out.println("Conclusion: enlarge boundaries, from -6.5 to +4.5 (or +3.5 if you do not want n=2");
 		System.out.println();
 
 		System.out.println("Number of intervals needed for 7 decimals accuracy, dependence on n and t.");
@@ -167,7 +174,22 @@ public class StudentizedRangeDistribution {
 		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);
 		System.out.println("Scheme: cartesian product.");
 		tab1.tabulate(VariationScheme.ALL_COMBINATIONS_ZIGZAG);
+
+		System.out.println("Strange phenomenon if we keep the boundaries -3.5 to +3, like originally found");
+		System.out.println("This is a *smaller* stretch and it says we need *more* intervals, can that be true?");
+		IntegratorTuner tuneIntervals2 = int3.CreateTuneIntervalsMulti(-3.5, 3.0, 8, 2, 1E-8, 2);
+		tab1.setTransformation(tuneIntervals2, 2);                //tell Tabulator that variable 2 is involved in the transformation
+		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);
+		tab1.tabulate(VariationScheme.ALL_COMBINATIONS_ZIGZAG);
 		
+		System.out.println("Let's see it in verbose mode, for n=3, t=50, on the smaller stretch -3.5 to +3.");
+		double t3 = 50;
+		DoubleUnaryOperator function3 = (u) -> MiddleIntegrand(n, t3, u);
+		int1.tuneIntervals(function3, -3.5, 3.0, 8, 2, 1E-8, 2, true);
+		System.out.println("And compare it with how it behaves on the bigger stretch, -6.5 to +4.5");
+		int1.tuneIntervals(function3, -6.5, 4.5, 8, 2, 1E-8, 2, true);
+		
+
 		//TODO 2: on to the outer integral where the parameters DO play a role according to the Fortran authors. But they do not state which role.
 	}
 }
