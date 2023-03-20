@@ -147,7 +147,7 @@ public class StudentizedRangeDistribution {
 				IntegratorMultiTunable.boundary.LOWER, -10.0, -2.5, 0.5, 1E-8);
 		Tabulator tab1 = new Tabulator(StudentizedRangeDistribution.class, "MiddleIntegrand", 3, false);
 		tab1.declareVariableInt(0, "n", new int[] {2, 3, 10, 100});
-		tab1.declareVariableDouble(1, "t", new double[] {0.5, 1, 2, 5});
+		tab1.declareVariableDouble(1, "t", new double[] {0.2, 1, 5, 50, 500});
 		tab1.declareVariableDouble(2, "u", new double[] { 1 });  //dummy integration variable, value not used
 		tab1.setTransformation(findVanishPL, 2);                  //tell Tabulator that variable 2 is involved in the transformation
 		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);
@@ -157,10 +157,12 @@ public class StudentizedRangeDistribution {
 				IntegratorMultiTunable.boundary.UPPER, +6.0, +1.5, 0.5, 1E-8);
 		tab1.setTransformation(findVanishPH, 2);
 		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);
-		
+		System.out.println("Conclusion: enlarge boundaries, from -6.5 to +3.5 (or +4.5 if you want n=2");
+		System.out.println();
+
 		System.out.println("Number of intervals needed for 7 decimals accuracy, dependence on n and t.");
 		System.out.println("Scheme: one pass through the middle for each variable.");
-		IntegratorTuner tuneIntervals = int3.CreateTuneIntervalsMulti(-3.5, 3.0, 8, 2, 1E-8, 2);
+		IntegratorTuner tuneIntervals = int3.CreateTuneIntervalsMulti(-6.5, 4.5, 8, 2, 1E-8, 2);
 		tab1.setTransformation(tuneIntervals, 2);                //tell Tabulator that variable 2 is involved in the transformation
 		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);
 		System.out.println("Scheme: cartesian product.");
