@@ -84,7 +84,7 @@ public class StudentizedRangeDistribution {
 	 */
 	public static double OuterIntegrand(int n, int df, double q, double t) {
 		DoubleUnaryOperator f = (u) -> MiddleIntegrand(n, t, u);
-		double Pnt = n * int1.integrate(f, -7, 4, 256);    //TODO: tune this integral!
+		double Pnt = n * int1.integrate(f, -6.5, 4.5, 256);
 		double tq = t / q;
 		double z = Math.exp(-tq * tq /2) / sqrtTwoPi;
 		return Math.pow(4*tq*z, df) * (1 - Pnt) / t;
@@ -146,9 +146,9 @@ public class StudentizedRangeDistribution {
 		System.out.println();
 		
 		System.out.println("Investigate influence of parameters (n, t) on results like te above.");
-		System.out.println("All the below done with trapezoidal rule - should we try the other too?");
+		System.out.println("All the below done with Simpson's rule - we tried the other one too");
 		IntegratorMultiTunable int3 = IntegratorMultiTunable.Create(
-				IntegratorMultiTunable.method.TRAPEZOIDAL_RULE);
+				IntegratorMultiTunable.method.SIMPSONS_RULE);
 		System.out.println("Left boundary (approx. for minus infinity), dependence on n and t.");
 		IntegratorTuner findVanishPL = int3.CreateFindVanishPointMulti(1024, 
 				IntegratorMultiTunable.boundary.LOWER, -10.0, -2.5, 0.5, 1E-8);
