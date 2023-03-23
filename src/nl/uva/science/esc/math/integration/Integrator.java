@@ -137,7 +137,7 @@ public abstract class Integrator {
 	 * @param safeValue,  a value for the boundary that's surely far enough to the left or right
 	 * @param initialValue, initial, surely UN-safe value for the boundary
 	 * @param stepSize, absolute value of the desired step size, going from safe to unsafe
-	 * @param criterion, difference with asymptote that's close enough to zero
+	 * @param criterion, value of the integral that's close enough to zero
 	 * @param verbose, do we want a table of attempts printed? 
 	 * @return first point where criterion was met, going from unsafe to safe with given step size
 	 */
@@ -193,37 +193,83 @@ public abstract class Integrator {
 	 * @param function, the function to integrate
 	 * @param numIntervals, the number on intervals for the integral approximation
 	 * @param whichSide, at which side are we investigating the vanish point?
-	 * @param initialValue, initial low value for the scale determination, it grows by multiplication
+	 * @param initialScale, initial low value for the scale determination, it grows by multiplication
 	 * @param factor, factor by which to increase the scale in each step, e.g. 10
 	 * @param numberOfSteps, after finding a scale at which the integral vanishes, in how many steps to 
 	 *    split the previous scale, for a more accurate determination? e.g. 10 or 20.
 	 * @param criterion, difference with asymptote that's close enough to zero
+	 * @param maxScale, safety net to prevent infinite loop
 	 * @param verbose, do we want a table of attempts printed? 
 	 * @return result of "vanishes" after determining suitable stepsize
+	 * @throws Exception 
 	 */
 	public double vanishesSuper1(DoubleUnaryOperator function, int numIntervals,
-			boundary whichSide, double initialValue, double factor, int numberOfSteps, double criterion,
-			boolean verbose) {
-		return 0;
+			boundary whichSide, double initialScale, double factor, int numberOfSteps, double criterion,
+			double maxScale, boolean verbose) throws Exception {
+		double scale = findScaleForVanishes(
+				function, numIntervals, 
+				(whichSide == boundary.LOWER), (whichSide == boundary.UPPER), 
+				initialScale, factor, criterion, maxScale, verbose);
+		scale = scale / factor;   //one step back, when the integral was still too large
+		double stepSize = scale / numberOfSteps;
+		double safeValue = (whichSide == boundary.LOWER) ? (-scale * factor) : (+scale * factor);
+		double initialValue = (whichSide == boundary.LOWER) ? -scale : +scale;
+		return vanishes(function, numIntervals, whichSide, safeValue, initialValue, stepSize, criterion, verbose);
 	}
 	
 	/**
 	 * Tuning: See vanishesSuper1 for general explanation.
 	 * This "2" version is when infinity is involved on both sides! The "vanishes" function is called for
-	 * both sides and we have an array of 2 boundaries to return!
-	 * @param function
-	 * @param numIntervals
-	 * @param initialValue
-	 * @param factor
-	 * @param numberOfSteps
-	 * @param criterion
-	 * @param verbose
-	 * @return
+	 * both sides, so we have an array of 2 boundaries to return. The same stepsize is used for both.
+	 * @param function, the function to integrate
+	 * @param numIntervals, the number on intervals for the integral approximation
+	 * @param initialScale, initial low value for the scale determination, it grows by multiplication
+	 * @param factor, factor by which to increase the scale in each step, e.g. 10
+	 * @param numberOfSteps, after finding a scale at which the integral vanishes, in how many steps to 
+	 *    split the previous scale, for a more accurate determination? e.g. 10 or 20.
+	 * @param criterion, difference with asymptote that's close enough to zero
+	 * @param maxScale, safety net to prevent infinite loop
+	 * @param verbose, do we want a table of attempts printed? 
+	 * @return result of 2x "vanishes" (for both lower and upper boundary) after determining suitable stepsize
+	 * @throws Exception 
 	 */
 	public double[] vanishesSuper2(DoubleUnaryOperator function, int numIntervals,
-			double initialValue, double factor, int numberOfSteps, double criterion,
-			boolean verbose) {
-		return new double[] {0, 0 };
+			double initialScale, double factor, int numberOfSteps, double criterion,
+			double maxScale, boolean verbose) throws Exception {
+		double scale = findScaleForVanishes(
+				function, numIntervals, true, true, initialScale, factor, criterion, maxScale, verbose);
+		scale = scale / factor;   //one step back, when the integral was still too large
+		double stepSize = scale / numberOfSteps;
+		double lower = vanishes(function, numIntervals, boundary.LOWER, -scale*factor, -scale, stepSize, criterion, verbose);
+		double upper = vanishes(function, numIntervals, boundary.UPPER, +scale*factor, +scale, stepSize, criterion, verbose);
+		return new double[] { lower, upper };
+	}
+	
+	private double findScaleForVanishes(DoubleUnaryOperator function, int numIntervals,
+			boolean lower, boolean upper, double initialScale, double factor, double criterion,
+			double maxScale, boolean verbose) throws Exception {
+		double approx = 999999;  //nonsensical first value, but supposedly larger than criterion
+		double currentScale = initialScale;
+		while (approx >= criterion && currentScale <= maxScale) {
+			approx = 0;
+			if (lower) {
+				double left = -currentScale * factor;
+				double right = -currentScale;
+				approx += integrate(function, left, right, numIntervals);				
+			}
+			if (upper) {
+				double left = currentScale;
+				double right = currentScale * factor;
+				approx += integrate(function, left, right, numIntervals);				
+			}
+			//prepare next iteration
+			currentScale *= factor; 
+		}
+		if (approx < criterion) {
+			return currentScale / factor; //the first scale close enough to zero!			
+		}
+		else 
+			throw new Exception("maxScale " + maxScale + " exceeded without criterion met.");
 	}
 
 	//For testing limiting behavior on either side
