@@ -20,6 +20,9 @@ public abstract class Integrator {
 		SIMPSONS_RULE
 	}
 	
+	/**
+	 * Which boundary? choose between upper or lower
+	 */
 	public enum boundary { LOWER, UPPER }
 	
 	public static final method defaultMethod = method.SIMPSONS_RULE;
@@ -179,6 +182,50 @@ public abstract class Integrator {
 		return variedBound;
 	}
 	
+	/**
+	 * Tuning: find the point that's closest enough to infinity for the integral to vanish within a
+	 * given accuracy. This version is useable if the scale on which to find the vanishpoint is not known
+	 * in advance: is it units, or tens, or hundreds, or millions we're talking about? If this is unknown
+	 * we can do a preliminary search using an initial value that gets multiplied by 10 until we reach a 
+	 * scale where the integral vanishes. We adapt our stepsize to the scale found and then call the ordinary
+	 * "vanishes" function. This will only work if the scale, however large, is "relatively" close to zero.
+	 * This "1" version is when infinity is involved on just 1 side!
+	 * @param function, the function to integrate
+	 * @param numIntervals, the number on intervals for the integral approximation
+	 * @param whichSide, at which side are we investigating the vanish point?
+	 * @param initialValue, initial low value for the scale determination, it grows by multiplication
+	 * @param factor, factor by which to increase the scale in each step, e.g. 10
+	 * @param numberOfSteps, after finding a scale at which the integral vanishes, in how many steps to 
+	 *    split the previous scale, for a more accurate determination? e.g. 10 or 20.
+	 * @param criterion, difference with asymptote that's close enough to zero
+	 * @param verbose, do we want a table of attempts printed? 
+	 * @return result of "vanishes" after determining suitable stepsize
+	 */
+	public double vanishesSuper1(DoubleUnaryOperator function, int numIntervals,
+			boundary whichSide, double initialValue, double factor, int numberOfSteps, double criterion,
+			boolean verbose) {
+		return 0;
+	}
+	
+	/**
+	 * Tuning: See vanishesSuper1 for general explanation.
+	 * This "2" version is when infinity is involved on both sides! The "vanishes" function is called for
+	 * both sides and we have an array of 2 boundaries to return!
+	 * @param function
+	 * @param numIntervals
+	 * @param initialValue
+	 * @param factor
+	 * @param numberOfSteps
+	 * @param criterion
+	 * @param verbose
+	 * @return
+	 */
+	public double[] vanishesSuper2(DoubleUnaryOperator function, int numIntervals,
+			double initialValue, double factor, int numberOfSteps, double criterion,
+			boolean verbose) {
+		return new double[] {0, 0 };
+	}
+
 	//For testing limiting behavior on either side
 
 	/**
