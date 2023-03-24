@@ -188,10 +188,55 @@ public class StudentizedRangeDistribution {
 		int1.tuneIntervals(function3, -3.5, 3.0, 8, 2, 1E-8, 2, true);
 		System.out.println("And compare it with how it behaves on the bigger stretch, -6.5 to +4.5");
 		int1.tuneIntervals(function3, -6.5, 4.5, 8, 2, 1E-8, 2, true);
-		
+
+		System.out.println();
 		System.out.println("***************************");
 		System.out.println("Tuning the 'outer' integral");
 		System.out.println("***************************");
+		System.out.println();
+		System.out.println("Explore integrand and integral (n=3, df=10, q=2.0), numIntervals high (516)");
+		System.out.println();
+		int df = 10;
+		double q = 2.0;
+		DoubleUnaryOperator function4 = (t2) -> OuterIntegrand(n, df, q, t2);
+		points = new double[] {1E-8, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5 };
+		int2.tabulate(function4, 516, points, boundary.UPPER, 1E-8);
+		System.out.println("The integrand is undefined at t = 0, but we can come really close and integrand is very small near 0.");
+		System.out.println("The integral rises from 0,0 to a horizontal asymptote, that's reached at t = 3 within 3 digits.");
+		System.out.println("We now try a more extreme value for each of the three parameters, while keeping the others 'in the middle'");
+		System.out.println("Well if n goes up, then obviously df has to go up too to keep df > n... we keep their ratio at 1 : 3 currently.");
+		System.out.println("Try: n=10, df=50, q = 2.0");
+		DoubleUnaryOperator function5 = (t2) -> OuterIntegrand(10, 50, 2.0, t2);
+		int2.tabulate(function5, 516, points, boundary.UPPER, 1E-8);
+		System.out.println("Try: n=3, df=10, q = 5.0");
+		DoubleUnaryOperator function6 = (t2) -> OuterIntegrand(3, 10, 5.0, t2);
+		int2.tabulate(function6, 516, points, boundary.UPPER, 1E-8);
+		System.out.println("Conclusions: n and/or df have an influence on the hight of the asymptote but not so much on when it is reached.");
+		System.out.println("q = 5.0 versus 2.0 leads to the asymptote being reached later, near 6.0 instead of near 3.0 (in 3 digits).");
+		System.out.println();
+		
+		System.out.println("Determine boundary on the upper side that fits our accuracy of 7 decimals (n=3, df=10, q=2.0).");
+		int2.vanishes(function4, 516, boundary.UPPER, +8, +1.5, 0.5, 1E-8, true);
+		System.out.println("Determine optimal method and number of intervals for our accuracy of 7 digits.");
+		int1.tuneIntervals(function4, 1E-8, 4.5, 8, 2, 1E-8, 2, true);
+		int2.tuneIntervals(function4, 1E-8, 4.5, 8, 2, 1E-8, 2, true);
+		System.out.println("Conclusion: trapezoidal rule gives quickest convergence, 32 intervals is enough. Simpson needs 64.");
+		System.out.println();
+		System.out.println("Investigate influence of parameters (n, df, q) on results like te above.");
+		System.out.println("All the below done with Trapezoid rule - TODO: try the other one too");
+		System.out.println("Upper boundary");
+		findVanishPL = int3.CreateFindVanishPointMulti(1024, 
+				IntegratorMultiTunable.boundary.UPPER, +8, +1.5, 0.5, 1E-8);
+		tab1 = new Tabulator(StudentizedRangeDistribution.class, "OuterIntegrand", 4, false);
+		tab1.declareVariableInt(0, "n", new int[] { 2, 3, 5, 10});
+		tab1.declareVariableInt(1, "df", new int[] { 10, 25, 50, 100});
+		tab1.declareVariableDouble(2, "q", new double[] { 0.2, 1.5, 3.0, 4.5, 6.0 });
+		tab1.declareVariableDouble(3, "t", new double[] { 1 });  //dummy integration variable, value not used
+		tab1.setTransformation(findVanishPL, 3);                 //tell Tabulator that variable 2 is involved in the transformation
+		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);
+		System.out.println("Upper boundary seems an almost linear function of q: y = 2 + x");
+		System.out.println("Upper boundary does not depend on n");
+		System.out.println("Upper boundary depends a bit on df, it goes down (-2) when df goes up (*10).");
 
 		//TODO 2: on to the outer integral where the parameters DO play a role according to the Fortran authors. But they do not state which role.
 	}

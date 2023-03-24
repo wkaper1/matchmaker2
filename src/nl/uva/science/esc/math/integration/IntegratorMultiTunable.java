@@ -84,7 +84,7 @@ public abstract class IntegratorMultiTunable {
 		int intervalsOK = 0;          //just a strange unlikely value
 		double prevApprox = -99999;   //idem
 		if (verbose) { //print headers for table
-			System.out.println("intervals, apptoximation, difference, converged");
+			System.out.println("intervals, approximation, difference, converged");
 		}
 		while (converged < convergenceRepetitions) {
 			double approx = integrate(function, lowerbound, upperbound, intervals);
