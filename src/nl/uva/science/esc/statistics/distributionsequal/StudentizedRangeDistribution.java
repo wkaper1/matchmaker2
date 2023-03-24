@@ -189,6 +189,9 @@ public class StudentizedRangeDistribution {
 		System.out.println("And compare it with how it behaves on the bigger stretch, -6.5 to +4.5");
 		int1.tuneIntervals(function3, -6.5, 4.5, 8, 2, 1E-8, 2, true);
 		
+		System.out.println("***************************");
+		System.out.println("Tuning the 'outer' integral");
+		System.out.println("***************************");
 
 		//TODO 2: on to the outer integral where the parameters DO play a role according to the Fortran authors. But they do not state which role.
 	}
