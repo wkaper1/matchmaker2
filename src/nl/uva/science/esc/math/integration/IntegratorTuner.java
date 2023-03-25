@@ -1,5 +1,7 @@
 package nl.uva.science.esc.math.integration;
 
+import java.lang.reflect.Method;
+
 import nl.uva.science.esc.math.Transformation2;
 
 /**
@@ -19,5 +21,14 @@ public abstract class IntegratorTuner implements Transformation2 {
 	
 	public IntegratorTuner(IntegratorMultiTunable int1) {
 		this.int1 = int1;
+	}
+	
+	@SuppressWarnings("rawtypes")
+	public Object run(Method method, Object[] args) {
+		Class[] argTypes = new Class[args.length];
+		for (int i=0; i<args.length; i++) {
+			argTypes[i] = args[i].getClass();
+		}
+		return run(method, args, argTypes);
 	}
 }

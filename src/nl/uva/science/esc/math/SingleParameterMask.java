@@ -1,7 +1,7 @@
 package nl.uva.science.esc.math;
 
 import java.lang.reflect.Method;
-import nl.uva.science.esc.reflection.myReflection;
+import nl.uva.science.esc.reflection.*;
 
 /**
  * Replaces java.util.function.DoubleUnaryOperator for a specific case: you have a method that accepts multiple
@@ -17,9 +17,7 @@ import nl.uva.science.esc.reflection.myReflection;
  * @author Wolter2
  */
 @SuppressWarnings("rawtypes")
-public class SingleParameterMask {
-	private Method method;   //the method to tabulate, as found by reflection
-	private Class[] parameterTypes; //in invocation order
+public class SingleParameterMask extends ReflectionWrapper {
 	private Object[] values;  //values for all of the parameters, also the current dummy (value is ignored)
 	private int variableIndex; //which of the parameters is currently THE variable?
 	
@@ -28,11 +26,8 @@ public class SingleParameterMask {
 	 * given as an array of Class objects.
 	 */
 	public SingleParameterMask(String classname, String methodname, Class[] parameterTypes) {
-		Class cls = myReflection.getClass(classname);
-		this.method = myReflection.getMethodFromClass(cls, methodname, parameterTypes);
-		this.parameterTypes = parameterTypes;
-		this.values = new Object[parameterTypes.length];
-		this.variableIndex = 0;
+		super(classname, methodname, parameterTypes);
+		common();
 	}
 
 	/**
@@ -40,21 +35,21 @@ public class SingleParameterMask {
 	 * Method method available
 	 */
 	public SingleParameterMask(Method method, Class[] parameterTypes) {
-		this.method = method;
-		this.parameterTypes = parameterTypes;
-		this.values = new Object[parameterTypes.length];
-		this.variableIndex = 0;
+		super(method, parameterTypes);
+		common();
 	}
 	
 	/**
 	 * Shortcut: if you already have the Class at hand but not the method, use this one!
 	 */
 	public SingleParameterMask(Class cls, String methodname, Class[] parameterTypes) {
-		this.method = myReflection.getMethodFromClass(cls, methodname, parameterTypes);
-		this.parameterTypes = parameterTypes;
+		super(cls, methodname, parameterTypes);
+		common();
+	}
+	
+	private void common() {
 		this.values = new Object[parameterTypes.length];
-		this.variableIndex = 0;
-		
+		this.variableIndex = 0;		
 	}
 	
 	/**

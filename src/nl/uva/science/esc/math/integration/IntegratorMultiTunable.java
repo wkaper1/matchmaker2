@@ -1,8 +1,10 @@
 package nl.uva.science.esc.math.integration;
 
+import java.lang.reflect.Method;
 import java.util.function.DoubleUnaryOperator;
 import nl.uva.science.esc.math.SingleParameterMask;
 import nl.uva.science.esc.math.Tabulator;
+import nl.uva.science.esc.reflection.ReflectionWrapper;
 
 /**
  * Ability to calculate numerical approximations of definite integrals, given the function
@@ -260,7 +262,7 @@ public abstract class IntegratorMultiTunable {
 	 */
 	public class TuneIntervalsMulti extends IntegratorTuner {
 		private double lowerbound;
-		private double upperbound; 
+		private double upperbound;
 		private int initialIntervals;
 		private int growFactor;
 		private double convergenceCriterion;
@@ -278,14 +280,16 @@ public abstract class IntegratorMultiTunable {
 		}
 
 		@Override
-		public double run(SingleParameterMask f, double x) {
+		public Object run(Method method, Object[] args, Class[] argTypes) {
+			SingleParameterMask f = new SingleParameterMask(method, argTypes);
 			return int1.tuneIntervals(f, lowerbound, upperbound, 
 					initialIntervals, growFactor, convergenceCriterion, convergenceRepetitions, false);
 		}
 
 		@Override
-		public boolean isConstant() {
-			return true;
+		public boolean[] isConstant() {
+			//TODO
+			return new boolean[] {};
 		}
 	}//end innerclass
 	
