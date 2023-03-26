@@ -251,45 +251,71 @@ public abstract class IntegratorMultiTunable {
 	 * Return wrapped version of tuneIntervals method, to make it multi-parameter-tunable
 	 * The object returned has a "run" method you'll need to call repeatedly!
 	 */
-	public TuneIntervalsMulti CreateTuneIntervalsMulti(double lowerbound, double upperbound, 
+	@SuppressWarnings("rawtypes")
+	public TuneIntervalsMulti CreateTuneIntervalsMulti(
+			Class[] argTypes, int integrationVariableIndex, boolean typeChecking, 
+			double lowerbound, double upperbound, 
 			int initialIntervals, int growFactor, double convergenceCriterion, int convergenceRepetitions) {
-		return new TuneIntervalsMulti(this, lowerbound, upperbound, initialIntervals, growFactor, 
-				convergenceCriterion, convergenceRepetitions);
+		return new TuneIntervalsMulti(argTypes, integrationVariableIndex, typeChecking, this, 
+				lowerbound, upperbound, initialIntervals, growFactor, convergenceCriterion, convergenceRepetitions);
 	}
 
 	/**
 	 * Wrapper class for TuneIntervals method, to make it multi-parameter-tunable
 	 */
+	@SuppressWarnings("rawtypes")
 	public class TuneIntervalsMulti extends IntegratorTuner {
 		private double lowerbound;
+		private ReflectionWrapper lowerboundFunc;
 		private double upperbound;
+		private ReflectionWrapper upperboundFunc;
 		private int initialIntervals;
 		private int growFactor;
 		private double convergenceCriterion;
 		private int convergenceRepetitions;
 		
-		public TuneIntervalsMulti(IntegratorMultiTunable int1, double lowerbound, double upperbound, 
+		public TuneIntervalsMulti(Class[] argTypes, int integrationVarIndex, boolean typeChecking, 
+				IntegratorMultiTunable int1, double lowerbound, double upperbound, 
 				int initialIntervals, int growFactor, double convergenceCriterion, int convergenceRepetitions) {
-			super(int1);
+			super(argTypes, integrationVarIndex, typeChecking, int1);
 			this.lowerbound = lowerbound;
 			this.upperbound = upperbound;
 			this.initialIntervals = initialIntervals;
 			this.growFactor = growFactor;
 			this.convergenceCriterion = convergenceCriterion;
 			this.convergenceRepetitions = convergenceRepetitions;
+			this.isConstant[integrationVarIndex] = true;
 		}
 
 		@Override
-		public Object run(Method method, Object[] args, Class[] argTypes) {
-			SingleParameterMask f = new SingleParameterMask(method, argTypes);
+		public Object run(Method method, Object[] args) throws Exception {
+			SingleParameterMask f = preRun(method, args);
+			if (lowerboundFunc != null) {
+				this.lowerbound = (double)lowerboundFunc.run(args);
+			}
+			if (upperboundFunc != null) {
+				this.upperbound = (double)upperboundFunc.run(args);
+			}
 			return int1.tuneIntervals(f, lowerbound, upperbound, 
 					initialIntervals, growFactor, convergenceCriterion, convergenceRepetitions, false);
 		}
 
-		@Override
-		public boolean[] isConstant() {
-			//TODO
-			return new boolean[] {};
+		/**
+		 * Option: Describe the method that's going to calculate the lower bound of the integral.
+		 * The method must accept exactly the same argument types in the same order as the integrand.
+		 */
+		public void setLowerboundFunc(Class cls, String methodname, Class[] argTypes) throws Exception {
+			typeCheck(argTypes);
+			this.lowerboundFunc = new ReflectionWrapper(cls, methodname, argTypes);
+		}
+		
+		/**
+		 * Option: Describe the method that's going to calculate the lower bound of the integral.
+		 * The method must accept exactly the same argument types in the same order as the integrand.
+		 */
+		public void setUpperboundFunc(Class cls, String methodname, Class[] argTypes) throws Exception {
+			typeCheck(argTypes);
+			this.upperboundFunc = new ReflectionWrapper(cls, methodname, argTypes);
 		}
 	}//end innerclass
 	
@@ -297,14 +323,19 @@ public abstract class IntegratorMultiTunable {
 	 * Return wrapped version of Vanishes method, to make it multi-parameter-tunable
 	 * The object returned has a "run" method you'll need to call repeatedly!
 	 */
-	public FindVanishPointMulti CreateFindVanishPointMulti(int numIntervals, 
+	@SuppressWarnings("rawtypes")
+	public FindVanishPointMulti CreateFindVanishPointMulti(
+			Class[] argTypes, int integrationVarIndex, boolean typeChecking, 
+			int numIntervals, 
 			boundary whichSide, double safeValue, double initialValue, double stepSize, double criterion) {
-		return new FindVanishPointMulti(this, numIntervals, whichSide, safeValue, initialValue, stepSize, criterion);
+		return new FindVanishPointMulti(argTypes, integrationVarIndex, typeChecking, this, 
+			numIntervals, whichSide, safeValue, initialValue, stepSize, criterion);
 	}
 	
 	/**
 	 * Wrapper class for Vanishes method, to make it multi-parameter-tunable
 	 */
+	@SuppressWarnings("rawtypes")
 	public class FindVanishPointMulti extends IntegratorTuner {
 		private int numIntervals;
 		private boundary whichSide;
@@ -313,25 +344,23 @@ public abstract class IntegratorMultiTunable {
 		private double stepSize;
 		private double criterion;
 
-		public FindVanishPointMulti(IntegratorMultiTunable int1, int numIntervals, 
+		public FindVanishPointMulti(Class[] argTypes, int integrationVarIndex, boolean typeChecking, 
+				IntegratorMultiTunable int1, int numIntervals, 
 				boundary whichSide, double safeValue, double initialValue, double stepSize, double criterion) {
-			super(int1);
+			super(argTypes, integrationVarIndex, typeChecking, int1);
 			this.numIntervals = numIntervals;
 			this.whichSide = whichSide;
 			this.safeValue = safeValue;
 			this.initialValue = initialValue;
 			this.stepSize = stepSize;
 			this.criterion = criterion;
+			this.isConstant[integrationVarIndex] = true;
 		}
 
 		@Override
-		public double run(SingleParameterMask f, double x) {
+		public Object run(Method method, Object[] args) throws Exception {
+			SingleParameterMask f = preRun(method, args);
 			return int1.vanishes(f, numIntervals, whichSide, safeValue, initialValue, stepSize, criterion, false);
-		}
-
-		@Override
-		public boolean isConstant() {
-			return true;
 		}
 	}//end innerClass
 }

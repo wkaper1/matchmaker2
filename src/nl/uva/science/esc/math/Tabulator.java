@@ -61,7 +61,6 @@ public class Tabulator {
 	
 	//optional feature: Transformation to perform on the function before tabulating it.
 	private Transformation2 transformation; //we need the slower multi-parameter version here! 
-	private int transformVariable;  //index of the single variable involved in the transformation
 	
 	/**
 	 * Load a static method for tabulation.
@@ -158,13 +157,24 @@ public class Tabulator {
 	}
 	
 	/**
-	 * Set a transformation to perform on the function before tabulating
+	 * Set a transformation to perform on the function before tabulating.
+	 * Prints a warning if after transformation the function is constant w.r.t. some variables that are being varied
+	 * (which is not useful and clutters the table)
 	 */
-	public void setTransformation(Transformation2 transformation, int transformVariable) {
+	public void setTransformation(Transformation2 transformation) throws Exception {
+		transformation.typeCheck(variableTypes);
 		this.transformation = transformation;
-		this.transformVariable = transformVariable;
-		if (transformation.isConstant() && values[transformVariable].length > 1) {
-			System.out.println("Warning: transformation is constant with respect to variable " + transformVariable + ", while multiple values were provided. Consider providing just 1 value, and not showing constant variables.");
+		
+		//Check if transformation declares constancies that we need to warn the user about
+		String suspectVarIndices = "";
+		for (int i=0; i<variableTypes.length; i++) {
+			if (transformation.isConstant()[i] && values[i].length > 1) {
+				suspectVarIndices += i + ", ";
+			}
+		}
+		if (suspectVarIndices.length() > 0) {
+			suspectVarIndices = suspectVarIndices.substring(0, suspectVarIndices.length() - 2); //get last comma off
+			System.out.println("Warning: transformation is constant with respect to variable(s) " + suspectVarIndices + ", while multiple values were provided. Consider providing just 1 value, and not showing constant variables.");
 			System.out.println();
 		}
 	}
@@ -269,7 +279,7 @@ public class Tabulator {
 			}			
 		}
 		else {
-			functionValue = invokeWithTransformation(args);
+			functionValue = (double) transformation.run(method, args);
 		}
 		
 		//print line
@@ -280,14 +290,5 @@ public class Tabulator {
 			}
 		}
 		System.out.println(functionValue);
-	}
-	
-	private double invokeWithTransformation(Object[] args) throws Exception {
-		//Mask the method to tabulate as a single-variable function, using (temporarily) fixed values
-		SingleParameterMask fx = new SingleParameterMask(this.method, this.variableTypes);
-		fx.setCurrentVariable(transformVariable);
-		fx.setValues(args);
-		//Provide the single variable function to the Transformation, let it return a value
-		return transformation.run(fx, (double)args[transformVariable]);
 	}
 }

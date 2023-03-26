@@ -24,32 +24,35 @@ public class SingleParameterMask extends ReflectionWrapper {
 	/**
 	 * Describe the method we'll be masking: class name fully qualified, method name, parameter types
 	 * given as an array of Class objects.
+	 * @param index, index of the single variable we'll not mask
 	 */
-	public SingleParameterMask(String classname, String methodname, Class[] parameterTypes) {
+	public SingleParameterMask(String classname, String methodname, Class[] parameterTypes, int index) {
 		super(classname, methodname, parameterTypes);
-		common();
+		common(index);
 	}
 
 	/**
 	 * Shortcut constructor: Use this if the caller is using reflection itself and already has a 
 	 * Method method available
+	 * @param index, index of the single variable we'll not mask
 	 */
-	public SingleParameterMask(Method method, Class[] parameterTypes) {
+	public SingleParameterMask(Method method, Class[] parameterTypes, int index) {
 		super(method, parameterTypes);
-		common();
+		common(index);
 	}
 	
 	/**
 	 * Shortcut: if you already have the Class at hand but not the method, use this one!
+	 * @param index, index of the single variable we'll not mask
 	 */
-	public SingleParameterMask(Class cls, String methodname, Class[] parameterTypes) {
+	public SingleParameterMask(Class cls, String methodname, Class[] parameterTypes, int index) {
 		super(cls, methodname, parameterTypes);
-		common();
+		common(index);
 	}
 	
-	private void common() {
+	private void common(int index) {
 		this.values = new Object[parameterTypes.length];
-		this.variableIndex = 0;		
+		this.variableIndex = index;		
 	}
 	
 	/**

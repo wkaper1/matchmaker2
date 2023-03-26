@@ -2,6 +2,7 @@ package nl.uva.science.esc.math.integration;
 
 import java.lang.reflect.Method;
 
+import nl.uva.science.esc.math.SingleParameterMask;
 import nl.uva.science.esc.math.Transformation2;
 
 /**
@@ -16,19 +17,34 @@ import nl.uva.science.esc.math.Transformation2;
  * Integrator. This points to implementing Transformation2 rather than 1.
  * @author Wolter2
  */
-public abstract class IntegratorTuner implements Transformation2 {
+@SuppressWarnings("rawtypes")
+public abstract class IntegratorTuner extends Transformation2 {
 	protected IntegratorMultiTunable int1;
-	
-	public IntegratorTuner(IntegratorMultiTunable int1) {
+	protected int integrationVarIndex;
+
+	/**
+	 * Constructor
+	 * @param argTypes, Class[] array describing the argument types of the integrand whose integral we are tuning
+	 * @param typeChecking, should the arguments be typeChecked at each call of the run method?
+	 * @param int1, the Integrator instance that will do the integrations
+	 */
+	public IntegratorTuner(Class[] argTypes, int integrationVarIndex, boolean typeChecking, IntegratorMultiTunable int1) {
+		super(argTypes, typeChecking);
 		this.int1 = int1;
+		this.integrationVarIndex = integrationVarIndex;
 	}
-	
-	@SuppressWarnings("rawtypes")
-	public Object run(Method method, Object[] args) {
-		Class[] argTypes = new Class[args.length];
-		for (int i=0; i<args.length; i++) {
-			argTypes[i] = args[i].getClass();
+
+	/**
+	 * Common pre-processing before a run.
+	 * All 3 IntegratorTuners need a single-variable "masked" version of the integrand.
+	 * And, we can just as well include the optional call to the typeCheck here.
+	 */
+	protected SingleParameterMask preRun(Method method, Object[] args) throws Exception {
+		if (typeChecking) {
+			typeCheckProtected(args);
 		}
-		return run(method, args, argTypes);
+		SingleParameterMask f = new SingleParameterMask(method, argTypes, integrationVarIndex);
+		f.setValues(args);
+		return f;
 	}
 }
