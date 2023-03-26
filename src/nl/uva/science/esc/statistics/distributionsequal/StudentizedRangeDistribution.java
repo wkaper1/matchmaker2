@@ -89,7 +89,14 @@ public class StudentizedRangeDistribution {
 		double z = Math.exp(-tq * tq /2) / sqrtTwoPi;
 		return Math.pow(4*tq*z, df) * (1 - Pnt) / t;
 	}
-	
+
+	/**
+	 * Tuning result: upper boundary for outer integral as a safe but non-wasteful
+	 * approximation of positive infinity.
+	 * This separate method is used as input in tuning the number of intervals.
+	 * (The same expression for the boundary should be in the OuterIntergral "Distribution"
+	 * method, too).
+	 */
 	public static double UpperBoundOuterIntegral(int n, int df, double q, double t) {
 		return 2.5 + q;
 	}
@@ -242,14 +249,14 @@ public class StudentizedRangeDistribution {
 		findVanishPL = int3.CreateFindVanishPointMulti(argTypes, 3, false, 1024, 
 				IntegratorMultiTunable.boundary.UPPER, +15, +1.5, 0.5, 1E-8);
 		tab1.setTransformation(findVanishPL);
-		/*
+		
 		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);
 		tab1.tabulate(VariationScheme.ALL_COMBINATIONS_ZIGZAG);
 		System.out.println("Upper boundary seems an almost linear function of q: y = 2 + x");
 		System.out.println("Upper boundary does depend only very little on n");
 		System.out.println("Upper boundary depends a bit on df, it goes down (-2) when df goes up (*10).");
 		System.out.println();
-		*/
+		
 		System.out.println("Number of intervals plotted against params (n, t, u), while using roughly optimized boundary");
 		IntegratorTuner tuneIntervals3 = int3.CreateTuneIntervalsMulti(
 				argTypes, 2, false, 1E-9, 8.5, 8, 2, 1E-8, 2);
