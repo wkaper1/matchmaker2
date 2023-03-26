@@ -296,9 +296,9 @@ public abstract class IntegratorMultiTunable {
 			if (upperboundFunc != null) {
 				this.upperbound = (double)upperboundFunc.run(args);
 			}
-			return int1.tuneIntervals(f, lowerbound, upperbound, 
+			return (double)int1.tuneIntervals(f, lowerbound, upperbound, 
 					initialIntervals, growFactor, convergenceCriterion, convergenceRepetitions, false);
-		}
+		}//the cast to double is second choice: it 's because the Tabulator can only handle doubles now.
 
 		/**
 		 * Option: Describe the method that's going to calculate the lower bound of the integral.

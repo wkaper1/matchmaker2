@@ -90,6 +90,10 @@ public class StudentizedRangeDistribution {
 		return Math.pow(4*tq*z, df) * (1 - Pnt) / t;
 	}
 	
+	public static double UpperBoundOuterIntegral(int n, int df, double q, double t) {
+		return 2.5 + q;
+	}
+	
 	/**
 	 * Calculate the probability for the given n, df and q this large, or larger
 	 * @param n, number of treatments compared
@@ -111,6 +115,7 @@ public class StudentizedRangeDistribution {
 	 * and finally incorporate the results into the outer integral.
 	 * @throws Exception 
 	 */
+	@SuppressWarnings("rawtypes")
 	public static void tuningReport() throws Exception {
 		Integrator int1 = Integrator.Create(method.TRAPEZOIDAL_RULE);
 		Integrator int2 = Integrator.Create();  //should be Simpson's
@@ -150,35 +155,38 @@ public class StudentizedRangeDistribution {
 		IntegratorMultiTunable int3 = IntegratorMultiTunable.Create(
 				IntegratorMultiTunable.method.SIMPSONS_RULE);
 		System.out.println("Left boundary (approx. for minus infinity), dependence on n and t.");
-		IntegratorTuner findVanishPL = int3.CreateFindVanishPointMulti(1024, 
-				IntegratorMultiTunable.boundary.LOWER, -10.0, -2.5, 0.5, 1E-8);
 		Tabulator tab1 = new Tabulator(StudentizedRangeDistribution.class, "MiddleIntegrand", 3, false);
 		tab1.declareVariableInt(0, "n", new int[] {2, 3, 10, 100});
 		tab1.declareVariableDouble(1, "t", new double[] {0.2, 1, 5, 50, 500});
 		tab1.declareVariableDouble(2, "u", new double[] { 1 });  //dummy integration variable, value not used
-		tab1.setTransformation(findVanishPL, 2);                  //tell Tabulator that variable 2 is involved in the transformation
+		Class[] argTypes = new Class[] {int.class, double.class, double.class};
+		IntegratorTuner findVanishPL = int3.CreateFindVanishPointMulti(argTypes, 2, false, 1024, 
+				IntegratorMultiTunable.boundary.LOWER, -10.0, -2.5, 0.5, 1E-8);
+		tab1.setTransformation(findVanishPL);
 		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);
 		
 		System.out.println("Right boundary (approx. for plus infinity), dependence on n and t.");
-		IntegratorTuner findVanishPH = int3.CreateFindVanishPointMulti(1024, 
+		IntegratorTuner findVanishPH = int3.CreateFindVanishPointMulti(argTypes, 2, false, 1024, 
 				IntegratorMultiTunable.boundary.UPPER, +6.0, +1.5, 0.5, 1E-8);
-		tab1.setTransformation(findVanishPH, 2);
+		tab1.setTransformation(findVanishPH);
 		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);
 		System.out.println("Conclusion: enlarge boundaries, from -6.5 to +4.5 (or +3.5 if you do not want n=2");
 		System.out.println();
 
 		System.out.println("Number of intervals needed for 7 decimals accuracy, dependence on n and t.");
 		System.out.println("Scheme: one pass through the middle for each variable.");
-		IntegratorTuner tuneIntervals = int3.CreateTuneIntervalsMulti(-6.5, 4.5, 8, 2, 1E-8, 2);
-		tab1.setTransformation(tuneIntervals, 2);                //tell Tabulator that variable 2 is involved in the transformation
+		IntegratorTuner tuneIntervals = int3.CreateTuneIntervalsMulti(
+				argTypes, 2, false, -6.5, 4.5, 8, 2, 1E-8, 2);
+		tab1.setTransformation(tuneIntervals);
 		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);
 		System.out.println("Scheme: cartesian product.");
 		tab1.tabulate(VariationScheme.ALL_COMBINATIONS_ZIGZAG);
 
 		System.out.println("Strange phenomenon if we keep the boundaries -3.5 to +3, like originally found");
 		System.out.println("This is a *smaller* stretch and it says we need *more* intervals, can that be true?");
-		IntegratorTuner tuneIntervals2 = int3.CreateTuneIntervalsMulti(-3.5, 3.0, 8, 2, 1E-8, 2);
-		tab1.setTransformation(tuneIntervals2, 2);                //tell Tabulator that variable 2 is involved in the transformation
+		IntegratorTuner tuneIntervals2 = int3.CreateTuneIntervalsMulti(
+				argTypes, 2, false, -3.5, 3.0, 8, 2, 1E-8, 2);
+		tab1.setTransformation(tuneIntervals2);
 		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);
 		tab1.tabulate(VariationScheme.ALL_COMBINATIONS_ZIGZAG);
 		
@@ -225,19 +233,33 @@ public class StudentizedRangeDistribution {
 		System.out.println("Investigate influence of parameters (n, df, q) on results like te above.");
 		System.out.println("All the below done with Trapezoid rule - TODO: try the other one too");
 		System.out.println("Upper boundary");
-		findVanishPL = int3.CreateFindVanishPointMulti(1024, 
-				IntegratorMultiTunable.boundary.UPPER, +8, +1.5, 0.5, 1E-8);
 		tab1 = new Tabulator(StudentizedRangeDistribution.class, "OuterIntegrand", 4, false);
 		tab1.declareVariableInt(0, "n", new int[] { 2, 3, 5, 10});
 		tab1.declareVariableInt(1, "df", new int[] { 10, 25, 50, 100});
 		tab1.declareVariableDouble(2, "q", new double[] { 0.2, 1.5, 3.0, 4.5, 6.0 });
 		tab1.declareVariableDouble(3, "t", new double[] { 1 });  //dummy integration variable, value not used
-		tab1.setTransformation(findVanishPL, 3);                 //tell Tabulator that variable 2 is involved in the transformation
+		argTypes = new Class[] { int.class, int.class, double.class, double.class };
+		findVanishPL = int3.CreateFindVanishPointMulti(argTypes, 3, false, 1024, 
+				IntegratorMultiTunable.boundary.UPPER, +15, +1.5, 0.5, 1E-8);
+		tab1.setTransformation(findVanishPL);
+		/*
 		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);
+		tab1.tabulate(VariationScheme.ALL_COMBINATIONS_ZIGZAG);
 		System.out.println("Upper boundary seems an almost linear function of q: y = 2 + x");
-		System.out.println("Upper boundary does not depend on n");
+		System.out.println("Upper boundary does depend only very little on n");
 		System.out.println("Upper boundary depends a bit on df, it goes down (-2) when df goes up (*10).");
-
-		//TODO 2: on to the outer integral where the parameters DO play a role according to the Fortran authors. But they do not state which role.
+		System.out.println();
+		*/
+		System.out.println("Number of intervals plotted against params (n, t, u), while using roughly optimized boundary");
+		IntegratorTuner tuneIntervals3 = int3.CreateTuneIntervalsMulti(
+				argTypes, 2, false, 1E-9, 8.5, 8, 2, 1E-8, 2);
+		tab1.setTransformation(tuneIntervals3);
+		System.out.println("First: upper boundary fixed at 8.5.");
+		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);
+		System.out.println("Try upper boundary = 2.5 + q, could be a bit better or no visible difference.");
+		((IntegratorMultiTunable.TuneIntervalsMulti)tuneIntervals3).setUpperboundFunc(
+				StudentizedRangeDistribution.class, "UpperBoundOuterIntegral", argTypes);
+		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);		
+		tab1.tabulate(VariationScheme.ALL_COMBINATIONS_ZIGZAG);		
 	}
 }
