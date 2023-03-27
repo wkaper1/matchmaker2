@@ -2,6 +2,8 @@ package nl.uva.science.esc.math.factorials;
 
 import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.Map;
+
 import nl.uva.science.esc.math.RationalNumber;
 
 /**
@@ -168,6 +170,83 @@ public class Factorials {
 		}
 		else { //n is odd
 			return preGFactor.toDouble() / (Math.PI * Math.sqrt(n));
+		}
+	}
+	
+	private static GammaOfRationalsLibrary gammaLib;
+	
+	public static double GammaOfRational(RationalNumber r) throws Exception {
+		if (gammaLib == null) {
+			gammaLib = new GammaOfRationalsLibrary();
+		}
+		r.integerQuotientInit();
+		if (r.integerQuotientIsInteger()) {
+			int i = (int)r.integerQuotientAsLong();
+			return (factorial2(i - 1)).doubleValue();
+		}
+		else {
+			RationalNumber remainingRational = r.integerQuotientRemainingRational();
+			double gammaR = gammaLib.getGamma(remainingRational);
+			RationalNumber product = remainingRational.clone();
+			for (int i=1; i<r.integerQuotientAsLong(); i++) {
+				remainingRational.AddInt(1);
+				//Nu heb ik nog helemaal geen caching van tussenresultaten, en dat is ook best pittig
+				//  want dat moet denk ik apart per remainingRational! Een HashMap met dezelfde dimensies als de "library"!
+				product.MultiplyThisBy(remainingRational);
+			}
+			return product.MultiplyGivenDoubleByThis(gammaR);			
+		}
+	}
+	
+	/**
+	 * Library of often-needed Gamma-values for Rational numbers < 1 having small denominators: 2, 3, 4.
+	 * Denominator 1 should not be needed, because we have the ordinary factorial function for that!
+	 * You can extend it to bigger denominators but it might require work.
+	 * (Like reading in a file that you found somewhere or calculating the needed integrals)
+	 */
+	private static class GammaOfRationalsLibrary {
+		//2D map of gamma values of rational numbers:
+		//     denominator -> ( numerator -> gamma)
+		private Map<Integer, Map<Integer, Double>> library = new HashMap<Integer, Map<Integer, Double>>();
+		
+		/**
+		 * Constructor, takes care that the library is filled
+		 */
+		public GammaOfRationalsLibrary() {
+			//denominator = 2
+			setGamma(1, 2, Math.sqrt(Math.PI));
+			//denominator = 3
+			setGamma(1, 3, 2.678938534707747633656);
+			setGamma(2, 3, 1.354117939426400416945);
+			//denominator = 4
+			setGamma(1, 4, 3.625609908221908311931);
+			setGamma(2, 4, Math.sqrt(Math.PI)); //the client software can't simplify Rationals yet...
+			setGamma(3, 4, 1.225416702465177645129);
+		}
+		
+		private void setGamma(int numerator, int denominator, double gamma) {
+			Map<Integer, Double> inner = library.getOrDefault(denominator, null);
+			if (inner == null) {
+				inner = new HashMap<Integer, Double>();
+				library.put(denominator, inner);
+			}
+			inner.put(numerator, gamma);
+		}
+		
+		public double getGamma(long numerator, long denominator ) throws Exception {
+			Map<Integer, Double> inner = library.getOrDefault(denominator, null);
+			if (inner == null) {
+				throw new Exception("Denominators larger than 4 are not supported yet.");
+			}
+			Double gamma = inner.getOrDefault(numerator, null);
+			if (gamma == null) {
+				throw new Exception("Gamma for nominator " + numerator + " and denominator " + denominator + " not found in library.");
+			}
+			return gamma;
+		}
+		
+		public double getGamma(RationalNumber r) throws Exception {
+			return getGamma(r.numerator().longValueExact(), r.denominator().longValueExact());
 		}
 	}
 }

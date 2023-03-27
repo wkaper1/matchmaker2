@@ -74,6 +74,37 @@ public class RationalNumber {
 		return ((new BigDecimal(numerator)).divide(new BigDecimal(denominator), 17, RoundingMode.HALF_EVEN)).doubleValue();
 	}
 	
+	//integer logic operations
+	
+	private BigInteger[] integerAndRemainder = numerator.divideAndRemainder(denominator);
+	
+	/**
+	 * Call this to initialize the integer quotient.
+	 * After that, you can inquire into various of its properties. Call this method again after the instance been modified!
+	 */
+	public void integerQuotientInit() {
+		integerAndRemainder = numerator.divideAndRemainder(denominator);
+	}
+	
+	public long integerQuotientAsLong() {
+		return integerAndRemainder[0].longValueExact();
+	}
+	
+	public RationalNumber integerQuotientRemainingRational() {
+		return new RationalNumber(integerAndRemainder[1], denominator);
+	}
+	
+	public long integerQuotientRemainderAsLong() {
+		return integerAndRemainder[1].longValueExact();
+	}
+	
+	/**
+	 * Check if the remainder is zero. Just a shortcut.
+	 */
+	public boolean integerQuotientIsInteger() {
+		return integerAndRemainder[1].longValueExact() == 0;
+	}
+	
 	//simple getters and other housekeeping methods
 	
 	public BigInteger numerator() {
