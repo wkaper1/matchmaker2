@@ -174,10 +174,22 @@ public class Factorials {
 	}
 	
 	private static GammaOfRationalsLibrary gammaLib;
-	
+
+	/**
+	 * Return the Gamma function value of a RationalNumber.
+	 * This is currently limited to rational numbers having small denominators: 1, 2, 3, 4.
+	 * The number should be already simplified, or having a small-enough denominator already.
+	 * (RationalNumbers that simplify to integers are however handled without protest)
+	 */
 	public static double GammaOfRational(RationalNumber r) throws Exception {
 		if (gammaLib == null) {
 			gammaLib = new GammaOfRationalsLibrary();
+		}
+		//The following 2 if's can be replaced by one if we call "simplify"...
+		//But how fast is simplification? (finding the gcd...). Another option: trying to treat integers as not at all a special case.
+		if (r.isInteger()) {
+			int i = r.numerator().intValueExact();
+			return (factorial2(i - 1)).doubleValue();
 		}
 		r.integerQuotientInit();
 		if (r.integerQuotientIsInteger()) {

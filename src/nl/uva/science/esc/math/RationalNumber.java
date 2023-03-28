@@ -46,6 +46,12 @@ public class RationalNumber {
 		denominator = denominator.multiply(BigInteger.valueOf(n));
 	}
 	
+	public void SimplifyThis() {
+		BigInteger gcd = numerator.gcd(denominator);
+		numerator = numerator.divide(gcd);
+		denominator = denominator.divide(gcd);
+	}
+	
 	//operations that do not modify 'this' but return a new Rational
 	
 	public RationalNumber AddInt(int n) {
@@ -75,6 +81,21 @@ public class RationalNumber {
 	}
 	
 	//integer logic operations
+	
+	/**
+	 * Return simplified version of this rational number
+	 */
+	public RationalNumber simplify() {
+		BigInteger gcd = numerator.gcd(denominator);
+		return new RationalNumber(numerator.divide(gcd), denominator.divide(gcd));
+	}
+
+	/**
+	 * Shortcut: denominator equals one?
+	 */
+	public boolean isInteger() {
+		return denominator.equals(BigInteger.ONE);
+	}
 	
 	private BigInteger[] integerAndRemainder = numerator.divideAndRemainder(denominator);
 	
