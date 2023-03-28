@@ -97,7 +97,7 @@ public class RationalNumber {
 		return denominator.equals(BigInteger.ONE);
 	}
 	
-	private BigInteger[] integerAndRemainder = numerator.divideAndRemainder(denominator);
+	private BigInteger[] integerAndRemainder;
 	
 	/**
 	 * Call this to initialize the integer quotient.

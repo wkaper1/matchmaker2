@@ -81,7 +81,7 @@ public class Factorials {
 	//  They consume memory more quickly but after many calls the difference gets less.
 	//  The method is not as general as the above: it exploits the quite special 'factorial' property.
 	
-	private static BigInteger[] factorial2 = new BigInteger[1000];   //array instead of hashmap, index 0 remains unused
+	private static BigInteger[] factorial2 = new BigInteger[1000];   //array instead of hashmap
 	private static int nmax = 0;  //to what n is the factorial2 array currently filled?
 	
 	/**
@@ -93,6 +93,7 @@ public class Factorials {
 			BigInteger fact;
 			//fill the array up to the required point, starting from the highest n already filled
 			if (nmax == 0) { //invalid starting point
+				factorial2[0] = new BigInteger("1"); //according to the convention for an empty product
 				i = 1;
 				factorial2[1] = new BigInteger("1");
 				fact = new BigInteger("1");
@@ -174,6 +175,7 @@ public class Factorials {
 	}
 	
 	private static GammaOfRationalsLibrary gammaLib;
+	private static GammaOfRationalsCache gammaCache;
 
 	/**
 	 * Return the Gamma function value of a RationalNumber.
@@ -181,9 +183,10 @@ public class Factorials {
 	 * The number should be already simplified, or having a small-enough denominator already.
 	 * (RationalNumbers that simplify to integers are however handled without protest)
 	 */
-	public static double GammaOfRational(RationalNumber r) throws Exception {
+	public static double gammaOfRational(RationalNumber r) throws Exception {
 		if (gammaLib == null) {
 			gammaLib = new GammaOfRationalsLibrary();
+			gammaCache = new GammaOfRationalsCache();
 		}
 		//The following 2 if's can be replaced by one if we call "simplify"...
 		//But how fast is simplification? (finding the gcd...). Another option: trying to treat integers as not at all a special case.
@@ -192,21 +195,39 @@ public class Factorials {
 			return (factorial2(i - 1)).doubleValue();
 		}
 		r.integerQuotientInit();
-		if (r.integerQuotientIsInteger()) {
-			int i = (int)r.integerQuotientAsLong();
-			return (factorial2(i - 1)).doubleValue();
+		int integerPart = (int)r.integerQuotientAsLong();
+		if (r.integerQuotientIsInteger()) { //remainder zero
+			return (factorial2(integerPart - 1)).doubleValue();
 		}
 		else {
 			RationalNumber remainingRational = r.integerQuotientRemainingRational();
-			double gammaR = gammaLib.getGamma(remainingRational);
-			RationalNumber product = remainingRational.clone();
-			for (int i=1; i<r.integerQuotientAsLong(); i++) {
-				remainingRational.AddInt(1);
-				//Nu heb ik nog helemaal geen caching van tussenresultaten, en dat is ook best pittig
-				//  want dat moet denk ik apart per remainingRational! Een HashMap met dezelfde dimensies als de "library"!
-				product.MultiplyThisBy(remainingRational);
+			double gammaRemaining = gammaLib.getGamma(remainingRational);
+			if (integerPart == 0) {
+				return gammaRemaining;
 			}
-			return product.MultiplyGivenDoubleByThis(gammaR);			
+			int filledUpTo = gammaCache.setCurrentSeries(remainingRational);
+			if (integerPart < filledUpTo) {
+				return gammaCache.get(integerPart - 1).MultiplyGivenDoubleByThis(gammaRemaining);
+			}
+			else {
+				RationalNumber product;
+				RationalNumber factor;
+				if (filledUpTo == 0) { //add the very first element
+					factor = remainingRational;
+					product = factor;
+					gammaCache.add(product);
+				}
+				else {
+					factor = remainingRational.AddInt(filledUpTo - 1);
+					product = gammaCache.get(filledUpTo - 1);
+				}
+				while (filledUpTo < integerPart - 1) {
+					factor = factor.AddInt(1);
+					product = product.MultiplyBy(factor);
+					filledUpTo = gammaCache.add(product);
+				}
+				return product.MultiplyGivenDoubleByThis(gammaRemaining);
+			}
 		}
 	}
 	
@@ -219,7 +240,7 @@ public class Factorials {
 	private static class GammaOfRationalsLibrary {
 		//2D map of gamma values of rational numbers:
 		//     denominator -> ( numerator -> gamma)
-		private Map<Integer, Map<Integer, Double>> library = new HashMap<Integer, Map<Integer, Double>>();
+		private Map<Long, Map<Long, Double>> library = new HashMap<Long, Map<Long, Double>>();
 		
 		/**
 		 * Constructor, takes care that the library is filled
@@ -236,17 +257,17 @@ public class Factorials {
 			setGamma(3, 4, 1.225416702465177645129);
 		}
 		
-		private void setGamma(int numerator, int denominator, double gamma) {
-			Map<Integer, Double> inner = library.getOrDefault(denominator, null);
+		private void setGamma(long numerator, long denominator, double gamma) {
+			Map<Long, Double> inner = library.getOrDefault(denominator, null);
 			if (inner == null) {
-				inner = new HashMap<Integer, Double>();
+				inner = new HashMap<Long, Double>();
 				library.put(denominator, inner);
 			}
 			inner.put(numerator, gamma);
 		}
 		
 		public double getGamma(long numerator, long denominator ) throws Exception {
-			Map<Integer, Double> inner = library.getOrDefault(denominator, null);
+			Map<Long, Double> inner = library.getOrDefault(denominator, null);
 			if (inner == null) {
 				throw new Exception("Denominators larger than 4 are not supported yet.");
 			}
@@ -261,4 +282,61 @@ public class Factorials {
 			return getGamma(r.numerator().longValueExact(), r.denominator().longValueExact());
 		}
 	}
+	
+	/**
+	 * Cache for the factorial-like products of Rationals, needed to calculate the Gamma function of a Rational
+	 * The products are indexed by the integerPart of the current Rational being added to the product.
+	 * So the element at index 0 is the one and only Rational < 1. The next Rational added is 1 bigger, so it's at index 1, etc.
+	 */
+	private static class GammaOfRationalsCache {
+		//Each series is stored in a 2D map, keyed by the remainderRational
+		//     denominator -> ( numerator -> product-array)
+		private Map<Long, Map<Long, RationalProductSeries>> cache = new HashMap<Long, Map<Long, RationalProductSeries>>();
+		private RationalProductSeries currentSeries;
+		
+		/**
+		 * Choose the series we are going to create, enlarge or interrogate, by providing the remainingRational < 1
+		 * (having small denominator, 2, 3, 4) that is the key to the series.
+		 * @param remainingRational, RationalNumber < 1 that will be the starting point of the current series
+		 * @return up to what index (not including) is the series developed already? Index of first empty slot!
+		 * @throws Exception 
+		 */
+		public int setCurrentSeries(RationalNumber remainingRational) throws Exception {
+			long denominator = remainingRational.denominator().longValueExact();
+			Map<Long, RationalProductSeries> inner = cache.getOrDefault(denominator, null);
+			if (inner == null) {
+				inner = new HashMap<Long, RationalProductSeries>();
+				cache.put(denominator, inner);
+			}
+			long numerator = remainingRational.numerator().longValueExact();
+			currentSeries = inner.getOrDefault(numerator, null);
+			if (currentSeries == null) {
+				currentSeries = new RationalProductSeries();
+				inner.put(numerator, currentSeries);
+			}
+			return currentSeries.filledUpTo;
+		}
+
+		/**
+		 * Add a rational to the current series
+		 * @return index of next slot to fill
+		 */
+		public int add(RationalNumber r) {
+			currentSeries.series[currentSeries.filledUpTo] = r;
+			return currentSeries.filledUpTo++;
+		}
+
+		/**
+		 * Return a RationalNumber from the current series
+		 */
+		public RationalNumber get(int index) {
+			return currentSeries.series[index];
+		}
+		
+		//Products of Rationals, cached by integerPart as the array index number.
+		private class RationalProductSeries {
+			public RationalNumber[] series = new RationalNumber[1000];
+			public int filledUpTo = 0;  //up to which index is the series filled?
+		}
+	}//end private static class GammaOfRationalsCache
 }
