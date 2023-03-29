@@ -37,7 +37,21 @@ public class TestFactorials {
 		System.out.println();
 		
 		//gammaOfRational, only the smart-caching version
+		//test 1: build up the cache slowly, restarting the series after each term
+		RationalNumber r0 = new RationalNumber(3, 2);
+		double gamma0 = Factorials.gammaOfRational(r0);
+		System.out.println("n/2=3/2, gamma=" + gamma0);
+		r0 = new RationalNumber(5, 2);
+		gamma0 = Factorials.gammaOfRational(r0);
+		System.out.println("n/2=5/2, gamma=" + gamma0);
+		r0 = new RationalNumber(7, 2);
+		gamma0 = Factorials.gammaOfRational(r0);
+		System.out.println("n/2=7/2, gamma=" + gamma0);
+		System.out.println();
+		
 		//Show Gamma(n/2) series
+		//test 2: from high to low, all the work is done to get the first term
+		//  after that, the lower terms require just a lookup plus something.
 		for (int n=12; n>0; n--) {
 			RationalNumber r = new RationalNumber(n, 2);
 			double gamma = Factorials.gammaOfRational(r);
@@ -58,5 +72,8 @@ public class TestFactorials {
 		RationalNumber r = new RationalNumber(13, 2);
 		double gamma = Factorials.gammaOfRational(r);
 		System.out.println("n/2=13/2, gamma=" + gamma);
+		r = new RationalNumber(14, 2);
+		gamma = Factorials.gammaOfRational(r);
+		System.out.println("n/2=14/2, gamma=" + gamma);
 	}
 }

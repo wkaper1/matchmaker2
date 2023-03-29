@@ -215,13 +215,13 @@ public class Factorials {
 				if (filledUpTo == 0) { //add the very first element
 					factor = remainingRational;
 					product = factor;
-					gammaCache.add(product);
+					filledUpTo = gammaCache.add(product);
 				}
 				else {
 					factor = remainingRational.AddInt(filledUpTo - 1);
 					product = gammaCache.get(filledUpTo - 1);
 				}
-				while (filledUpTo < integerPart - 1) {
+				while (filledUpTo < integerPart) {
 					factor = factor.AddInt(1);
 					product = product.MultiplyBy(factor);
 					filledUpTo = gammaCache.add(product);
@@ -323,7 +323,8 @@ public class Factorials {
 		 */
 		public int add(RationalNumber r) {
 			currentSeries.series[currentSeries.filledUpTo] = r;
-			return currentSeries.filledUpTo++;
+			currentSeries.filledUpTo++;
+			return currentSeries.filledUpTo; //don't add ++ here, effect unexpected
 		}
 
 		/**
