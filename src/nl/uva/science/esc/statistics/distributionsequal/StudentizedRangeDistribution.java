@@ -2,9 +2,11 @@ package nl.uva.science.esc.statistics.distributionsequal;
 
 import java.util.function.DoubleUnaryOperator;
 
+import nl.uva.science.esc.math.RationalNumber;
 import nl.uva.science.esc.math.SingleParameterMask;
 import nl.uva.science.esc.math.Tabulator;
 import nl.uva.science.esc.math.Tabulator.VariationScheme;
+import nl.uva.science.esc.math.factorials.Factorials;
 import nl.uva.science.esc.math.integration.*;
 import nl.uva.science.esc.math.integration.Integrator.method;
 import nl.uva.science.esc.math.integration.Integrator.boundary;
@@ -106,13 +108,14 @@ public class StudentizedRangeDistribution {
 	 * @param n, number of treatments compared
 	 * @param df, degrees of freedom of the error variance
 	 * @param q, studentized range statistic
+	 * @throws Exception 
 	 */
-	public static double Distribution(int n, int df, double q) {
+	public static double Distribution(int n, int df, double q) throws Exception {
 		DoubleUnaryOperator f = (t) -> OuterIntegrand(n, df, q, t);
 		//TODO: tune and decide boundaries as functions of q and df, see Dunlop et al.
 		double Int = int1.integrate(f, n, n, n);
-		double Gamma = 1;  //TODO: find gamma as function of df / 2, i.e. fraction with 2 as denominator
-		double cv = 2 * Math.pow(Math.sqrt(df * Math.PI) / 4, df) / Gamma;
+		double gamma = Factorials.gammaOfRational(new RationalNumber(df, 2));
+		double cv = 2 * Math.pow(Math.sqrt(df * Math.PI) / 4, df) / gamma;
 		return cv * Int;
 	}
 
