@@ -37,7 +37,8 @@ public class StudentizedRangeDistribution {
 	public static final double b5 = 1.330274429;
 	public static final double p  =  .2316419;
 	public static final double sqrtTwoPi = Math.sqrt(2 * Math.PI);
-	private static Integrator int1 = Integrator.Create();
+	private static Integrator int1 = Integrator.Create(method.SIMPSONS_RULE);
+	private static Integrator int2 = Integrator.Create(method.TRAPEZOIDAL_RULE);
 	
 	/**
 	 * Inner integral: The cumulative probability for the normal distribution
@@ -112,11 +113,23 @@ public class StudentizedRangeDistribution {
 	 */
 	public static double Distribution(int n, int df, double q) throws Exception {
 		DoubleUnaryOperator f = (t) -> OuterIntegrand(n, df, q, t);
-		//TODO: tune and decide boundaries as functions of q and df, see Dunlop et al.
-		double Int = int1.integrate(f, n, n, n);
+		//The below is easy and safe: both upperbound and numberintervals safely chosen
+		//   it could be a factor of 2 faster if we take both upperbound and numintervals as functions of primarily q, but.. is it worth the hassle?
+		double Int = int2.integrate(f, 1E-9, 8.5, 256);
 		double gamma = Factorials.gammaOfRational(new RationalNumber(df, 2));
 		double cv = 2 * Math.pow(Math.sqrt(df * Math.PI) / 4, df) / gamma;
 		return cv * Int;
+	}
+
+	/**
+	 * Test the distribution, see if it fits the published tables
+	 */
+	public static void tabulateDistribution() throws Exception {
+		Tabulator tab1 = new Tabulator(StudentizedRangeDistribution.class, "Distribution", 3, false);
+		tab1.declareVariableInt(0, "n", new int[] { 2, 3, 5, 10 });
+		tab1.declareVariableInt(1, "df", new int[] { 10, 25, 50, 100 });
+		tab1.declareVariableDouble(2, "q", new double[] {0.2, 1.5, 3.0, 4.5, 6.0 });
+		tab1.tabulate(VariationScheme.ALL_COMBINATIONS_ZIGZAG);;
 	}
 
 	/**
@@ -240,6 +253,7 @@ public class StudentizedRangeDistribution {
 		int2.tuneIntervals(function4, 1E-8, 4.5, 8, 2, 1E-8, 2, true);
 		System.out.println("Conclusion: trapezoidal rule gives quickest convergence, 32 intervals is enough. Simpson needs 64.");
 		System.out.println();
+		
 		System.out.println("Investigate influence of parameters (n, df, q) on results like te above.");
 		System.out.println("All the below done with Trapezoid rule - TODO: try the other one too");
 		System.out.println("Upper boundary");
@@ -249,7 +263,9 @@ public class StudentizedRangeDistribution {
 		tab1.declareVariableDouble(2, "q", new double[] { 0.2, 1.5, 3.0, 4.5, 6.0 });
 		tab1.declareVariableDouble(3, "t", new double[] { 1 });  //dummy integration variable, value not used
 		argTypes = new Class[] { int.class, int.class, double.class, double.class };
-		findVanishPL = int3.CreateFindVanishPointMulti(argTypes, 3, false, 1024, 
+		IntegratorMultiTunable int4 = IntegratorMultiTunable.Create(
+				IntegratorMultiTunable.method.TRAPEZOIDAL_RULE);
+		findVanishPL = int4.CreateFindVanishPointMulti(argTypes, 3, false, 1024, 
 				IntegratorMultiTunable.boundary.UPPER, +15, +1.5, 0.5, 1E-8);
 		tab1.setTransformation(findVanishPL);
 		
@@ -261,7 +277,7 @@ public class StudentizedRangeDistribution {
 		System.out.println();
 		
 		System.out.println("Number of intervals plotted against params (n, t, u), while using roughly optimized boundary");
-		IntegratorTuner tuneIntervals3 = int3.CreateTuneIntervalsMulti(
+		IntegratorTuner tuneIntervals3 = int4.CreateTuneIntervalsMulti(
 				argTypes, 2, false, 1E-9, 8.5, 8, 2, 1E-8, 2);
 		tab1.setTransformation(tuneIntervals3);
 		System.out.println("First: upper boundary fixed at 8.5.");
