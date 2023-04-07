@@ -109,27 +109,35 @@ public class StudentizedRangeDistribution {
 	 * @param n, number of treatments compared
 	 * @param df, degrees of freedom of the error variance
 	 * @param q, studentized range statistic
+	 * @param complement, show the complement of the probability P' = 1 - P
 	 * @throws Exception 
 	 */
-	public static double Distribution(int n, int df, double q) throws Exception {
+	public static double Distribution(int n, int df, double q, boolean complement) throws Exception {
 		DoubleUnaryOperator f = (t) -> OuterIntegrand(n, df, q, t);
 		//The below is easy and safe: both upperbound and numberintervals safely chosen
 		//   it could be a factor of 2 faster if we take both upperbound and numintervals as functions of primarily q, but.. is it worth the hassle?
 		double Int = int2.integrate(f, 1E-9, 8.5, 256);
 		double gamma = Factorials.gammaOfRational(new RationalNumber(df, 2));
 		double cv = 2 * Math.pow(Math.sqrt(df * Math.PI) / 4, df) / gamma;
-		return cv * Int;
+		if (complement)
+			return 1 - cv * Int;
+		else
+			return cv * Int;
 	}
 
 	/**
-	 * Test the distribution, see if it fits the published tables
+	 * Test the distribution, e.g. to see if it fits the published tables
+	 * @param complement, show the complement of the probability P' = 1 - P, for easier comparison with
+	 *   some reference tables
 	 */
-	public static void tabulateDistribution() throws Exception {
-		Tabulator tab1 = new Tabulator(StudentizedRangeDistribution.class, "Distribution", 3, false);
-		tab1.declareVariableInt(0, "n", new int[] { 2, 3, 5, 10 });
-		tab1.declareVariableInt(1, "df", new int[] { 10, 25, 50, 100 });
-		tab1.declareVariableDouble(2, "q", new double[] {0.2, 1.5, 3.0, 4.5, 6.0 });
-		tab1.tabulate(VariationScheme.ALL_COMBINATIONS_ZIGZAG);;
+	public static void tabulateDistribution(boolean complement) throws Exception {
+		Tabulator tab1 = new Tabulator(StudentizedRangeDistribution.class, "Distribution", 4, false);
+		tab1.declareVariableInt(0, "n", new int[] { 2, 5, 15, 100 });
+		tab1.declareVariableInt(1, "df", new int[] { 4, 8, 16, 32 });
+		tab1.declareVariableDouble(2, "q", new double[] { 4.0, 7.0, 10.0 });
+		tab1.declareVariableBoolean(3, "comp", new boolean[] { complement });
+		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);
+		tab1.tabulate(VariationScheme.ALL_COMBINATIONS_ZIGZAG);
 	}
 
 	/**

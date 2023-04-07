@@ -115,7 +115,6 @@ public class Tabulator {
 	/**
 	 * Declare a long variable, mentioning the set of values you want to tabulate for that variable, 
 	 * and also the index position in the method invocation (0 = first)
-	 * @throws Exception 
 	 */
 	public void declareVariableLong(int index, String name, long[] values) throws Exception {
 		this.values[index] = new Object[values.length];
@@ -128,7 +127,6 @@ public class Tabulator {
 	/**
 	 * Declare a double variable, mentioning the set of values you want to tabulate for that variable.
 	 * and also the index position in the method invocation (0 = first)
-	 * @throws Exception 
 	 */
 	public void declareVariableDouble(int index, String name, double[] values) throws Exception {
 		this.values[index] = new Object[values.length];
@@ -136,6 +134,18 @@ public class Tabulator {
 			this.values[index][i] = (Object)values[i];
 		}
 		finishDeclare(index, name, double.class);
+	}
+
+	/**
+	 * Declare a boolean variable, mentioning the set of values you want to tabulate for that variable, 
+	 * and also the index position in the method invocation (0 = first)
+	 */
+	public void declareVariableBoolean(int index, String name, boolean[] values) throws Exception {
+		this.values[index] = new Object[values.length];
+		for (int i=0; i<values.length; i++) {
+			this.values[index][i] = (Object)values[i];
+		}
+		finishDeclare(index, name, boolean.class);		
 	}
 	
 	private void finishDeclare(int index, String name, Class cls) throws Exception {
