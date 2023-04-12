@@ -170,12 +170,14 @@ public class StudentizedRangeDistribution {
 		System.out.println("We return to n=3, t=1.");
 		System.out.println();
 		
-		System.out.println("Determine boundaries on both sides that fit our accuracy of 7 decimals.");
+		System.out.println("The inner integral taken from Abramovitz & Stegun (1964) has accuracy 7.5E-8.");
+		System.out.println("We choose 1E-8 as accuracy goal for the middle integral, in order to add an error that's small compared to theirs.");
+		System.out.println("Determine boundaries on both sides that fit our desired accuracy.");
 		System.out.println();
 		int2.vanishes(function, 516, boundary.LOWER, -10, -2.5, 0.5, 1E-8, true);
 		int2.vanishes(function, 516, boundary.UPPER, +6, +1.5, 0.5, 1E-8, true);
 		System.out.println("Conclusion: integration from -3.5 to 3.0 can replace minus to plus infinity.");
-		System.out.println("Determine optimal method and number of intervals for our accuracy of 7 digits.");
+		System.out.println("Determine optimal method and number of intervals for our accuracy of 8 digits.");
 		int1.tuneIntervals(function, -3.5, 3.0, 8, 2, 1E-8, 2, true);
 		int2.tuneIntervals(function, -3.5, 3.0, 8, 2, 1E-8, 2, true);
 		System.out.println("Conclusion: trapezoidal rule gives quickest convergence, 64 intervals is more than adequate.");
@@ -191,14 +193,14 @@ public class StudentizedRangeDistribution {
 		tab1.declareVariableDouble(1, "t", new double[] {0.2, 1, 5, 50, 500});
 		tab1.declareVariableDouble(2, "u", new double[] { 1 });  //dummy integration variable, value not used
 		Class[] argTypes = new Class[] {int.class, double.class, double.class};
-		IntegratorTuner findVanishPL = int3.CreateFindVanishPointMulti(argTypes, 2, false, 1024, 
-				IntegratorMultiTunable.boundary.LOWER, -10.0, -2.5, 0.5, 1E-8);
+		IntegratorTuner findVanishPL = int3.CreateFindVanishPointMulti(argTypes, 2, false, 2048, 
+				IntegratorMultiTunable.boundary.LOWER, -20.0, -2.5, 0.5, 1E-8);
 		tab1.setTransformation(findVanishPL);
 		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);
 		
 		System.out.println("Right boundary (approx. for plus infinity), dependence on n and t.");
-		IntegratorTuner findVanishPH = int3.CreateFindVanishPointMulti(argTypes, 2, false, 1024, 
-				IntegratorMultiTunable.boundary.UPPER, +6.0, +1.5, 0.5, 1E-8);
+		IntegratorTuner findVanishPH = int3.CreateFindVanishPointMulti(argTypes, 2, false, 2048, 
+				IntegratorMultiTunable.boundary.UPPER, +15.0, +1.5, 0.5, 1E-8);
 		tab1.setTransformation(findVanishPH);
 		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);
 		System.out.println("Conclusion: enlarge boundaries, from -6.5 to +4.5 (or +3.5 if you do not want n=2");
@@ -224,9 +226,11 @@ public class StudentizedRangeDistribution {
 		System.out.println("Let's see it in verbose mode, for n=3, t=50, on the smaller stretch -3.5 to +3.");
 		double t3 = 50;
 		DoubleUnaryOperator function3 = (u) -> MiddleIntegrand(n, t3, u);
-		int1.tuneIntervals(function3, -3.5, 3.0, 8, 2, 1E-8, 2, true);
+		int2.tuneIntervals(function3, -3.5, 3.0, 8, 2, 1E-8, 2, true);
 		System.out.println("And compare it with how it behaves on the bigger stretch, -6.5 to +4.5");
-		int1.tuneIntervals(function3, -6.5, 4.5, 8, 2, 1E-8, 2, true);
+		int2.tuneIntervals(function3, -6.5, 4.5, 8, 2, 1E-8, 2, true);
+		System.out.println("Conclusion: the effect seems real.");
+		System.out.println("But then, what's the cautious choice: 128 or 256 intervals? We choose 256 for the middle integral.");
 
 		System.out.println();
 		System.out.println("***************************");
@@ -238,31 +242,32 @@ public class StudentizedRangeDistribution {
 		int df = 10;
 		double q = 2.0;
 		DoubleUnaryOperator function4 = (t2) -> OuterIntegrand(n, df, q, t2);
-		points = new double[] {1E-8, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5 };
-		int2.tabulate(function4, 516, points, boundary.UPPER, 1E-8);
+		points = new double[] {1E-9, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5 };
+		int2.tabulate(function4, 1024, points, boundary.UPPER, 1E-8);
 		System.out.println("The integrand is undefined at t = 0, but we can come really close and integrand is very small near 0.");
 		System.out.println("The integral rises from 0,0 to a horizontal asymptote, that's reached at t = 3 within 3 digits.");
 		System.out.println("We now try a more extreme value for each of the three parameters, while keeping the others 'in the middle'");
 		System.out.println("Well if n goes up, then obviously df has to go up too to keep df > n... we keep their ratio at 1 : 3 currently.");
 		System.out.println("Try: n=10, df=50, q = 2.0");
 		DoubleUnaryOperator function5 = (t2) -> OuterIntegrand(10, 50, 2.0, t2);
-		int2.tabulate(function5, 516, points, boundary.UPPER, 1E-8);
+		int2.tabulate(function5, 1024, points, boundary.UPPER, 1E-8);
 		System.out.println("Try: n=3, df=10, q = 5.0");
 		DoubleUnaryOperator function6 = (t2) -> OuterIntegrand(3, 10, 5.0, t2);
-		int2.tabulate(function6, 516, points, boundary.UPPER, 1E-8);
+		int2.tabulate(function6, 1024, points, boundary.UPPER, 1E-8);
 		System.out.println("Conclusions: n and/or df have an influence on the hight of the asymptote but not so much on when it is reached.");
 		System.out.println("q = 5.0 versus 2.0 leads to the asymptote being reached later, near 6.0 instead of near 3.0 (in 3 digits).");
 		System.out.println();
 		
 		System.out.println("Determine boundary on the upper side that fits our accuracy of 7 decimals (n=3, df=10, q=2.0).");
-		int2.vanishes(function4, 516, boundary.UPPER, +8, +1.5, 0.5, 1E-8, true);
+		int2.vanishes(function4, 1024, boundary.UPPER, +15, +1.5, 0.5, 1E-8, true);
+		System.out.println("Conclusion 4.5 upper boundary suffices for (n=3, df=10, q=2.0).");
 		System.out.println("Determine optimal method and number of intervals for our accuracy of 7 digits.");
-		int1.tuneIntervals(function4, 1E-8, 4.5, 8, 2, 1E-8, 2, true);
-		int2.tuneIntervals(function4, 1E-8, 4.5, 8, 2, 1E-8, 2, true);
+		int1.tuneIntervals(function4, 1E-9, 4.5, 8, 2, 1E-8, 2, true);
+		int2.tuneIntervals(function4, 1E-9, 4.5, 8, 2, 1E-8, 2, true);
 		System.out.println("Conclusion: trapezoidal rule gives quickest convergence, 32 intervals is enough. Simpson needs 64.");
 		System.out.println();
 		
-		System.out.println("Investigate influence of parameters (n, df, q) on results like te above.");
+		System.out.println("Investigate influence of parameters (n, df, q) on results like the above.");
 		System.out.println("All the below done with Trapezoid rule - TODO: try the other one too");
 		System.out.println("Upper boundary");
 		tab1 = new Tabulator(StudentizedRangeDistribution.class, "OuterIntegrand", 4, false);
