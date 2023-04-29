@@ -81,7 +81,7 @@ public abstract class Integrator {
 	 */
 	public int tuneIntervals(
 			DoubleUnaryOperator function, double lowerbound, double upperbound, 
-			int initialIntervals, int growFactor, double convergenceCriterion, int convergenceRepetitions,
+			int initialIntervals, float growFactor, double convergenceCriterion, int convergenceRepetitions,
 			boolean verbose
 	) {
 		int converged = 0; //how many times in a row did we see the convergence criterion met?
@@ -115,7 +115,7 @@ public abstract class Integrator {
 				System.out.println();
 			}
 			//prepare next iteration
-			intervals = intervals * growFactor;
+			intervals = Math.round(intervals * growFactor);
 			prevApprox = approx;
 		}
 		if (verbose) {

@@ -1,6 +1,7 @@
 package nl.uva.science.esc.math.integration;
 
 import java.lang.reflect.Method;
+import java.math.MathContext;
 import java.util.function.DoubleUnaryOperator;
 import nl.uva.science.esc.math.SingleParameterMask;
 import nl.uva.science.esc.math.Tabulator;
@@ -78,7 +79,7 @@ public abstract class IntegratorMultiTunable {
 	 */
 	public int tuneIntervals(
 			SingleParameterMask function, double lowerbound, double upperbound, 
-			int initialIntervals, int growFactor, double convergenceCriterion, int convergenceRepetitions,
+			int initialIntervals, float growFactor, double convergenceCriterion, int convergenceRepetitions,
 			boolean verbose
 	) {
 		int converged = 0; //how many times in a row did we see the convergence criterion met?
@@ -112,7 +113,7 @@ public abstract class IntegratorMultiTunable {
 				System.out.println();
 			}
 			//prepare next iteration
-			intervals = intervals * growFactor;
+			intervals = Math.round(intervals * growFactor);
 			prevApprox = approx;
 		}
 		if (verbose) {
@@ -255,7 +256,7 @@ public abstract class IntegratorMultiTunable {
 	public TuneIntervalsMulti CreateTuneIntervalsMulti(
 			Class[] argTypes, int integrationVariableIndex, boolean typeChecking, 
 			double lowerbound, double upperbound, 
-			int initialIntervals, int growFactor, double convergenceCriterion, int convergenceRepetitions) {
+			int initialIntervals, float growFactor, double convergenceCriterion, int convergenceRepetitions) {
 		return new TuneIntervalsMulti(argTypes, integrationVariableIndex, typeChecking, this, 
 				lowerbound, upperbound, initialIntervals, growFactor, convergenceCriterion, convergenceRepetitions);
 	}
@@ -270,13 +271,13 @@ public abstract class IntegratorMultiTunable {
 		private double upperbound;
 		private ReflectionWrapper upperboundFunc;
 		private int initialIntervals;
-		private int growFactor;
+		private float growFactor;
 		private double convergenceCriterion;
 		private int convergenceRepetitions;
 		
 		public TuneIntervalsMulti(Class[] argTypes, int integrationVarIndex, boolean typeChecking, 
 				IntegratorMultiTunable int1, double lowerbound, double upperbound, 
-				int initialIntervals, int growFactor, double convergenceCriterion, int convergenceRepetitions) {
+				int initialIntervals, float growFactor, double convergenceCriterion, int convergenceRepetitions) {
 			super(argTypes, integrationVarIndex, typeChecking, int1);
 			this.lowerbound = lowerbound;
 			this.upperbound = upperbound;

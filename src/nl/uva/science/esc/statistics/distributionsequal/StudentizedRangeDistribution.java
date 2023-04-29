@@ -291,7 +291,7 @@ public class StudentizedRangeDistribution {
 		
 		System.out.println("Number of intervals plotted against params (n, t, u), while using roughly optimized boundary");
 		IntegratorTuner tuneIntervals3 = int4.CreateTuneIntervalsMulti(
-				argTypes, 2, false, 1E-9, 8.5, 8, 2, 1E-8, 2);
+				argTypes, 2, false, 1E-9, 8.5, 8, (float)Math.pow(2, 1.0/3), 1E-8, 2);
 		tab1.setTransformation(tuneIntervals3);
 		System.out.println("First: upper boundary fixed at 8.5.");
 		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);
