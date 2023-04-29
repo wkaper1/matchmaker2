@@ -114,9 +114,8 @@ public class StudentizedRangeDistribution {
 	 */
 	public static double Distribution(int n, int df, double q, boolean complement) throws Exception {
 		DoubleUnaryOperator f = (t) -> OuterIntegrand(n, df, q, t);
-		//The below is easy and safe: both upperbound and numberintervals safely chosen
-		//   it could be a factor of 2 faster if we take both upperbound and numintervals as functions of primarily q, but.. is it worth the hassle?
-		double Int = int2.integrate(f, 1E-9, 8.5, 256);
+		double upperBound = 2.5 + q;
+		double Int = int2.integrate(f, 1E-9, upperBound, 155);
 		double gamma = Factorials.gammaOfRational(new RationalNumber(df, 2));
 		double cv = 2 * Math.pow(Math.sqrt(df * Math.PI) / 4, df) / gamma;
 		if (complement)
@@ -268,7 +267,7 @@ public class StudentizedRangeDistribution {
 		System.out.println();
 		
 		System.out.println("Investigate influence of parameters (n, df, q) on results like the above.");
-		System.out.println("All the below done with Trapezoid rule - TODO: try the other one too");
+		System.out.println("From here: all done with Trapezoid rule, until we have a complete recepy. Then try the other one");
 		System.out.println("Upper boundary");
 		tab1 = new Tabulator(StudentizedRangeDistribution.class, "OuterIntegrand", 4, false);
 		tab1.declareVariableInt(0, "n", new int[] { 2, 3, 5, 10});
@@ -299,6 +298,60 @@ public class StudentizedRangeDistribution {
 		((IntegratorMultiTunable.TuneIntervalsMulti)tuneIntervals3).setUpperboundFunc(
 				StudentizedRangeDistribution.class, "UpperBoundOuterIntegral", argTypes);
 		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);		
+		System.out.println("Variable upper boundary = 2.5 + q turns out better than fixed at 8.5 in theory, because.");
+		System.out.println("it often allows a smaller number of intervals to calculate. Estimating a rule for the number.");
+		System.out.println("of intervals that's both safe AND conserves computing time could be a daunting task.");
+		System.out.println();
 		tab1.tabulate(VariationScheme.ALL_COMBINATIONS_ZIGZAG);		
+		System.out.println("- Number of intervals needed depends most strongly on q. It increases (monotonously) with q.");
+		System.out.println("It doubles when q goes from 1.5 to 6.0 (quadrupels).");
+		System.out.println("- Number of intervals has a minimum round df = 25, both at low q (1.5) and high q (6.0).");
+		System.out.println("It's a shallow minimum for most values of q, but becomes stronger around 1.5 and below.");
+		System.out.println("- Number of intervals increases with n but not strongly.");
+		System.out.println();
+		System.out.println("Decisions:");
+		System.out.println("- It's too difficult for now to choose a function of q and df that's accuracy-safe and conserves time.");
+		System.out.println("- It would require a two-variable polynomial function fit!");
+		System.out.println("- For now: choose 155, a fixed number of intervals, for the whole range.");
+		System.out.println("- Keep the upper boundary as a function (2.5 + q) of q, because the intervals will be spent better.");
+		System.out.println();
+		System.out.println("And now... repeat the investigation for Simpson's rule!");
+		System.out.println("Upper boundary");
+		tab1 = new Tabulator(StudentizedRangeDistribution.class, "OuterIntegrand", 4, false);
+		tab1.declareVariableInt(0, "n", new int[] { 2, 3, 5, 10});
+		tab1.declareVariableInt(1, "df", new int[] { 10, 25, 50, 100});
+		tab1.declareVariableDouble(2, "q", new double[] { 0.2, 1.5, 3.0, 4.5, 6.0 });
+		tab1.declareVariableDouble(3, "t", new double[] { 1 });  //dummy integration variable, value not used
+		argTypes = new Class[] { int.class, int.class, double.class, double.class };
+		int4 = IntegratorMultiTunable.Create(
+				IntegratorMultiTunable.method.SIMPSONS_RULE);
+		findVanishPL = int4.CreateFindVanishPointMulti(argTypes, 3, false, 1024, 
+				IntegratorMultiTunable.boundary.UPPER, +15, +1.5, 0.5, 1E-8);
+		tab1.setTransformation(findVanishPL);
+		
+		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);
+		tab1.tabulate(VariationScheme.ALL_COMBINATIONS_ZIGZAG);
+		System.out.println("Upper boundary seems an almost linear function of q: y = 2 + x");
+		System.out.println("Upper boundary does depend only very little on n");
+		System.out.println("Upper boundary depends a bit on df, it goes down (-2) when df goes up (*10).");
+		System.out.println("Conclusions for the upper boundary do not depend on the integration method, probably rightly so.");
+		System.out.println();
+		System.out.println("Number of intervals plotted against params (n, t, u), while using roughly optimized boundary");
+		tuneIntervals3 = int4.CreateTuneIntervalsMulti(
+				argTypes, 2, false, 1E-9, 8.5, 8, (float)Math.pow(2, 1.0/3), 1E-8, 2);
+		tab1.setTransformation(tuneIntervals3);
+		System.out.println("First: upper boundary fixed at 8.5.");
+		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);
+		System.out.println("Try upper boundary = 2.5 + q, could be a bit better or no visible difference.");
+		((IntegratorMultiTunable.TuneIntervalsMulti)tuneIntervals3).setUpperboundFunc(
+				StudentizedRangeDistribution.class, "UpperBoundOuterIntegral", argTypes);
+		tab1.tabulate(VariationScheme.ONE_PASS_PER_VARIABLE_OTHERS_AT_MIDPOINT);		
+		System.out.println("We see the same trends as with trapezoidal rule, only the needed number of intervals is higher now: roughly double.");
+		System.out.println();
+		tab1.tabulate(VariationScheme.ALL_COMBINATIONS_ZIGZAG);		
+		System.out.println("Again: with Simpson's rule an accuracy-safe function for the number of intervals that conserves time is hard to formulate.");
+		System.out.println("Trends are roughly the same as for Trapezoidal rule, but the steep descent to the minimum at df=25 for low values of q occurs at q = 1.5");
+		System.out.println("rather spectacularly! However it doesn't occur for the even lower value q = 0.2.");
+		System.out.println("As needed numbers of intervals are higher with simpson's we stick to the trapezoidal rule for the outer integral, with the decisions made above.");
 	}
 }
