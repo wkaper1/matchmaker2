@@ -28,6 +28,15 @@ public class RationalNumber {
 		numerator = numerator.add(denominator.multiply(BigInteger.valueOf(n)));
 	}
 	
+	public void ToThisAdd(RationalNumber r, boolean simplify) {
+		BigInteger newNumerator1 = this.numerator.multiply(r.denominator);
+		BigInteger nemNumerator2 = r.numerator.multiply(this.denominator);
+		numerator = newNumerator1.add(nemNumerator2);
+		denominator = this.denominator.multiply(r.denominator);
+		if (simplify)
+			SimplifyThis();
+	}
+	
 	public void MultiplyThisBy(RationalNumber r) {
 		numerator = numerator.multiply(r.numerator);
 		denominator = denominator.multiply(r.denominator);
@@ -58,12 +67,34 @@ public class RationalNumber {
 		return new RationalNumber(numerator.add(denominator.multiply(BigInteger.valueOf(n))), denominator);
 	}
 	
+	public RationalNumber Add(RationalNumber r, boolean simplify) {
+		BigInteger newNumerator1 = this.numerator.multiply(r.denominator);
+		BigInteger nemNumerator2 = r.numerator.multiply(this.denominator);
+		BigInteger newNumerator = newNumerator1.add(nemNumerator2);
+		BigInteger newDenominator = this.denominator.multiply(r.denominator);
+		if (simplify) {
+			BigInteger gcd = newNumerator.gcd(newDenominator);
+			return new RationalNumber(newNumerator.divide(gcd), newDenominator.divide(gcd));
+		}
+		else {
+			return new RationalNumber(newNumerator, newDenominator);
+		}
+	}
+	
 	public RationalNumber MultiplyBy(RationalNumber r) {
 		return new RationalNumber(numerator.multiply(r.numerator), denominator.multiply(r.denominator));
 	}
 	
 	public RationalNumber DivideBy(RationalNumber r) {
 		return new RationalNumber(numerator.multiply(r.denominator), denominator.multiply(r.numerator));
+	}
+	
+	public RationalNumber ToThePowerOf(int n) {
+		return new RationalNumber(numerator.pow(n), denominator.pow(n));
+	}
+	
+	public RationalNumber inverse() {
+		return new RationalNumber(denominator, numerator);
 	}
 	
 	//operations that take a double and result in a double
