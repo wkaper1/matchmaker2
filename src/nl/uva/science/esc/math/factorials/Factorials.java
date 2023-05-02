@@ -178,12 +178,22 @@ public class Factorials {
 	private static GammaOfRationalsCache gammaCache;
 
 	/**
-	 * Return the Gamma function value of a RationalNumber.
+	 * Return the Gamma function value of a RationalNumber as a double.
 	 * This is currently limited to rational numbers having small denominators: 1, 2, 3, 4.
-	 * The number should be already simplified, or having a small-enough denominator already.
+	 * The input rational number should be already simplified, or having a small-enough denominator already.
 	 * (RationalNumbers that simplify to integers are however handled without protest)
 	 */
 	public static double gammaOfRational(RationalNumber r) throws Exception {
+		return gammaOfRationalSimplified(r).toDouble();
+	}
+
+	/**
+	 * Return the Gamma function value of a RationalNumber in a simplified but exact representation.
+	 * This is currently limited to rational numbers having small denominators: 1, 2, 3, 4.
+	 * The input rational number should be already simplified, or having a small-enough denominator already.
+	 * (RationalNumbers that simplify to integers are however handled without protest)
+	 */
+	public static SimplifiedGammaOfRational gammaOfRationalSimplified(RationalNumber r) throws Exception {
 		if (gammaLib == null) {
 			gammaLib = new GammaOfRationalsLibrary();
 			gammaCache = new GammaOfRationalsCache();
@@ -192,22 +202,21 @@ public class Factorials {
 		//But how fast is simplification? (finding the gcd...). Another option: trying to treat integers as not at all a special case.
 		if (r.isInteger()) {
 			int i = r.numerator().intValueExact();
-			return (factorial2(i - 1)).doubleValue();
+			return new SimplifiedGammaOfRational(factorial2(i - 1));
 		}
 		r.integerQuotientInit();
 		int integerPart = (int)r.integerQuotientAsLong();
 		if (r.integerQuotientIsInteger()) { //remainder zero
-			return (factorial2(integerPart - 1)).doubleValue();
+			return new SimplifiedGammaOfRational(factorial2(integerPart - 1));
 		}
 		else {
 			RationalNumber remainingRational = r.integerQuotientRemainingRational();
-			double gammaRemaining = gammaLib.getGamma(remainingRational);
 			if (integerPart == 0) {
-				return gammaRemaining;
+				return new SimplifiedGammaOfRational(new RationalNumber(0, 1), remainingRational);
 			}
 			int filledUpTo = gammaCache.setCurrentSeries(remainingRational);
 			if (integerPart < filledUpTo) {
-				return gammaCache.get(integerPart - 1).MultiplyGivenDoubleByThis(gammaRemaining);
+				return new SimplifiedGammaOfRational(gammaCache.get(integerPart - 1), remainingRational);
 			}
 			else {
 				RationalNumber product;
@@ -226,8 +235,67 @@ public class Factorials {
 					product = product.MultiplyBy(factor);
 					filledUpTo = gammaCache.add(product);
 				}
-				return product.MultiplyGivenDoubleByThis(gammaRemaining);
+				return new SimplifiedGammaOfRational(product, remainingRational);
 			}
+		}
+	}
+	
+	/**
+	 * A value of the Gamma function for a rational number > 1 can be simplified to a product
+	 * R1 * Gamma(R2) where R2 is a rational number in [0, 1].
+	 * This is especially advantageous if we can limit ourselves to small denominators.
+	 * It allows e.g. to collect many Gamma values sharing the same R2.
+	 * This class represents such a simplified Gamma value.
+	 */
+	public static class SimplifiedGammaOfRational {
+		RationalNumber rationalFactor;    //The rational part of the product R1 * Gamma(R2), so R1 
+		RationalNumber remainderRational; //The rational R2 (0 <= R2 <= 1), whose Gamma is the (usually) irrational part of the product
+
+		/**
+		 * Create a general SimplifiedGammaOfRational value
+		 */
+		public SimplifiedGammaOfRational(RationalNumber rationalFactor, RationalNumber remainderRational) {
+			this.rationalFactor = rationalFactor;
+			this.remainderRational = remainderRational;
+		}
+
+		/**
+		 * Some gamma-values are just factorials and therefore integers.
+		 * This is a shortcut constructor for such values.
+		 */
+		public SimplifiedGammaOfRational(BigInteger rationalFactor) {
+			this.rationalFactor = new RationalNumber(rationalFactor, BigInteger.ONE);
+			this.remainderRational = new RationalNumber(1, 1);
+		}
+
+		/**
+		 * The rational part of the product R1 * Gamma(R2), so R1
+		 */
+		public RationalNumber getRationalFactor() {
+			return rationalFactor;
+		}
+
+		/**
+		 * The rational R2 (0 <= R2 <= 1), whose Gamma is the (usually) irrational part of the product
+		 */
+		public RationalNumber getRemainderRational() {
+			return remainderRational;
+		}
+
+		/**
+		 * Approximates 'this' Gamma value as a double
+		 */
+		public double toDouble() throws Exception {
+			double irrational = gammaLib.getGamma(remainderRational);
+			return rationalFactor.MultiplyGivenDoubleByThis(irrational);
+		}
+		
+		public String remainderToString() {
+			return "G(" + remainderRational.toString() + ")";
+		}
+		
+		public String toString() {
+			return rationalFactor + " * G(" + remainderRational.toString() + ")";
 		}
 	}
 	
