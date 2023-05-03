@@ -14,20 +14,13 @@ public class PolynomialRationalCoefficients {
 	private RationalNumber[] coefficients;
 	
 	/**
-	 * Constructor, requires an array of coefficients
+	 * Constructor, uses the binomial expansion for (A + B.X)^N to construct this polynomial
+	 * @param BinomialA, the binomial term A from (A + B.X)^N
+	 * @param BinomialB, the binomial term A from (A + B.X)^N
+	 * @param N, the integer power N from (A + B.X)^N
 	 */
-	public PolynomialRationalCoefficients(RationalNumber[] coefficients) {
-		this.coefficients = coefficients;
-	}
-	
-	/**
-	 * Constructor, uses the binomial expansion for (A + X)^N to construct this polynomial
-	 * @param BinomialA, the binomial term A from (A + B)^N
-	 * @param BinomialB, the binomial term A from (A + B)^N
-	 * @param N, the integer power N from (A + B)^N
-	 */
-	public PolynomialRationalCoefficients(RationalNumber BinomialA, RationalNumber BinomialB, int N) {
-		this.coefficients = new RationalNumber[N+1];
+	public static PolynomialRationalCoefficients CreateFromBinomial(RationalNumber BinomialA, RationalNumber BinomialB, int N) {
+		RationalNumber[] coefficients = new RationalNumber[N+1];
 		for (int i=0;i<coefficients.length;i++) {
 			RationalNumber powerfactor = BinomialA.ToThePowerOf(N - i).MultiplyBy(BinomialB.ToThePowerOf(i));
 			coefficients[i] = new RationalNumber(
@@ -35,6 +28,32 @@ public class PolynomialRationalCoefficients {
 					Factorials.factorial2(N - i).multiply(Factorials.factorial2(i)));
 			coefficients[i].MultiplyThisBy(powerfactor);
 		}
+		return new PolynomialRationalCoefficients(coefficients);
+	}
+	
+	/**
+	 * Constructor, uses the binomial expansion for (A + B.X)^N to construct this polynomial
+	 * @param BinomialA, the binomial term A from (A + B.X)^N
+	 * @param BinomialB, the binomial term A from (A + B.X)^N
+	 * @param N, the integer power N from (A + B.X)^N
+	 */
+	public static PolynomialRationalCoefficients CreateFromBinomialInts(int BinomialA, int BinomialB, int N) {
+		RationalNumber[] coefficients = new RationalNumber[N+1];
+		for (int i=0;i<coefficients.length;i++) {
+			int powerfactor = (int)Math.pow(BinomialA, (N - i)) * (int)Math.pow(BinomialB, i);
+			coefficients[i] = new RationalNumber(
+					Factorials.factorial2(N), 
+					Factorials.factorial2(N - i).multiply(Factorials.factorial2(i)));
+			coefficients[i].MultiplyThisBy(new RationalNumber(powerfactor, 1));
+		}
+		return new PolynomialRationalCoefficients(coefficients);
+	}
+
+	/**
+	 * Constructor, requires an array of coefficients
+	 */
+	public PolynomialRationalCoefficients(RationalNumber[] coefficients) {
+		this.coefficients = coefficients;
 	}
 	
 	/**
@@ -92,6 +111,25 @@ public class PolynomialRationalCoefficients {
 	
 	public void DivideThisBy(RationalNumber r) {
 		this.MultiplyThisBy(r.inverse());
+	}
+	
+	public PolynomialRationalCoefficients MultiplyByPowerOfX(int xPower) {
+		return new PolynomialRationalCoefficients(ShiftCoeffsForPowerOfX(xPower));
+	}
+	
+	public void MultiplyThisByPowerOfX(int xPower) {
+		this.coefficients = ShiftCoeffsForPowerOfX(xPower);
+	}
+	
+	private RationalNumber[] ShiftCoeffsForPowerOfX(int xPower) {
+		RationalNumber[] newCoeffs = new RationalNumber[coefficients.length + xPower];
+		for (int i=0; i<coefficients.length; i++) {
+			newCoeffs[i + xPower] = coefficients[i];
+		}
+		for (int i=0; i<xPower; i++) {
+			newCoeffs[i] = new RationalNumber(0, 1);
+		}
+		return newCoeffs;
 	}
 	
 	/**
