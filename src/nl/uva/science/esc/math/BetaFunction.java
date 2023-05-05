@@ -121,7 +121,7 @@ public class BetaFunction {
 		 */
 		private void useRelationForA(int a, int b) throws Exception {
 			PolynomialRationalCoefficients nw = newTermForRelation(a, b, a);
-			cache[a + 2][b] = cache[a][b].Add(nw);
+			cache[a + 2][b] = cache[a][b].Subtract(nw);
 		}
 		
 		/**

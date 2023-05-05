@@ -60,21 +60,35 @@ public class PolynomialRationalCoefficients {
 	 * Add this polynomial and the given polynomial, return result as new polynomial
 	 */
 	public PolynomialRationalCoefficients Add(PolynomialRationalCoefficients p) {
-		return new PolynomialRationalCoefficients(AddCoeffs(p));
+		return new PolynomialRationalCoefficients(AddOrSubtrCoeffs(p, false));
+	}
+
+	/**
+	 * From this polynomial subtract the given polynomial, return result as new polynomial
+	 */
+	public PolynomialRationalCoefficients Subtract(PolynomialRationalCoefficients p) {
+		return new PolynomialRationalCoefficients(AddOrSubtrCoeffs(p, true));
 	}
 
 	/**
 	 * Let this polynomial become the sum of this and the given polynomial
 	 */
 	public void ToThisAdd(PolynomialRationalCoefficients p) {
-		this.coefficients = AddCoeffs(p);
+		this.coefficients = AddOrSubtrCoeffs(p, false);
 	}
 
-	private RationalNumber[] AddCoeffs(PolynomialRationalCoefficients p) {
+	/**
+	 * Let this polynomial become the difference of this and the given polynomial (in that order)
+	 */
+	public void FromThisSubtract(PolynomialRationalCoefficients p) {
+		this.coefficients = AddOrSubtrCoeffs(p, true);
+	}
+
+	private RationalNumber[] AddOrSubtrCoeffs(PolynomialRationalCoefficients p, boolean subtract) {
 		RationalNumber[] newCoeffs = new RationalNumber[Math.max(this.coefficients.length, p.coefficients.length)];
 		int commonPart = Math.min(this.coefficients.length, p.coefficients.length);
 		for (int i=0;i<=commonPart;i++) {
-			newCoeffs[i] = this.coefficients[i].Add(p.coefficients[i], false);
+			newCoeffs[i] = this.coefficients[i].AddOrSubtr(p.coefficients[i], subtract, false);
 		}
 		if (newCoeffs.length > commonPart) {
 			if (this.coefficients.length > commonPart) {
@@ -84,7 +98,8 @@ public class PolynomialRationalCoefficients {
 			}
 			else {
 				for (int i=commonPart + 1; i<newCoeffs.length; i++) {
-					newCoeffs[i] = p.coefficients[i];
+					newCoeffs[i] = subtract ? 
+							p.coefficients[i].negate() : p.coefficients[i];
 				}				
 			}
 		}

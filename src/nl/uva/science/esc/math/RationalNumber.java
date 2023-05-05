@@ -28,13 +28,22 @@ public class RationalNumber {
 		numerator = numerator.add(denominator.multiply(BigInteger.valueOf(n)));
 	}
 	
-	public void ToThisAdd(RationalNumber r, boolean simplify) {
+	public void ToThisAddOrSubtr(RationalNumber r, boolean subtract, boolean simplify) {
 		BigInteger newNumerator1 = this.numerator.multiply(r.denominator);
 		BigInteger nemNumerator2 = r.numerator.multiply(this.denominator);
-		numerator = newNumerator1.add(nemNumerator2);
+		numerator = subtract ? 
+				newNumerator1.subtract(nemNumerator2) : newNumerator1.add(nemNumerator2);
 		denominator = this.denominator.multiply(r.denominator);
 		if (simplify)
 			SimplifyThis();
+	}
+	
+	public void ToThisAdd(RationalNumber r, boolean simplify) {
+		ToThisAddOrSubtr(r, false, simplify);
+	}
+	
+	public void FromThisSubtract(RationalNumber r, boolean simplify) {
+		ToThisAddOrSubtr(r, true	, simplify);
 	}
 	
 	public void MultiplyThisBy(RationalNumber r) {
@@ -67,10 +76,11 @@ public class RationalNumber {
 		return new RationalNumber(numerator.add(denominator.multiply(BigInteger.valueOf(n))), denominator);
 	}
 	
-	public RationalNumber Add(RationalNumber r, boolean simplify) {
+	public RationalNumber AddOrSubtr(RationalNumber r, boolean subtract, boolean simplify) {
 		BigInteger newNumerator1 = this.numerator.multiply(r.denominator);
 		BigInteger nemNumerator2 = r.numerator.multiply(this.denominator);
-		BigInteger newNumerator = newNumerator1.add(nemNumerator2);
+		BigInteger newNumerator = subtract ? 
+				newNumerator1.subtract(nemNumerator2) : newNumerator1.add(nemNumerator2); 
 		BigInteger newDenominator = this.denominator.multiply(r.denominator);
 		if (simplify) {
 			BigInteger gcd = newNumerator.gcd(newDenominator);
@@ -79,6 +89,14 @@ public class RationalNumber {
 		else {
 			return new RationalNumber(newNumerator, newDenominator);
 		}
+	}
+	
+	public RationalNumber Add(RationalNumber r, boolean simplify) {
+		return AddOrSubtr(r, false, simplify);
+	}
+	
+	public RationalNumber Subtract(RationalNumber r, boolean simplify) {
+		return AddOrSubtr(r, true, simplify);
 	}
 	
 	public RationalNumber MultiplyBy(RationalNumber r) {
@@ -95,6 +113,10 @@ public class RationalNumber {
 	
 	public RationalNumber inverse() {
 		return new RationalNumber(denominator, numerator);
+	}
+	
+	public RationalNumber negate() {
+		return new RationalNumber(numerator.negate(), denominator);
 	}
 	
 	//operations that take a double and result in a double
