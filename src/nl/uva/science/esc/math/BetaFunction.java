@@ -4,7 +4,7 @@ import nl.uva.science.esc.math.factorials.Factorials;
 
 /**
  * Variants of the BetaFunction.
- * It is related to the GammaFunction which in the factorials subpackage
+ * It is related to the GammaFunction which in the Factorial subpackage
  * @author Wolter2
  *
  */
@@ -41,23 +41,38 @@ public class BetaFunction {
 	 * For x=1 the two should be equal.
 	 * Usually the RegularizedIncompleteBetaFunction is defined as the quotient of incomplete and
 	 * complete BetaFunction, but we do it the other way around.
-	 * We aim at a computation that directly gives us the RegularizedIncompleteBetaFunction, therefore
-	 * we define the (non-regularized) Incomplete BetaFunction as a product of RegularizedIncomplete and
-	 * Complete BetaFunction.
+	 * a and b are RationalNumbers with denominator equal to 2, x is a double.
+	 *
 	 */
 	public static double IncompleteBetaFunction(double x, RationalNumber a, RationalNumber b) throws Exception {
 		return RegularizedIncompleteBetaFunction(x, a, b) * CompleteBetaFunction(a, b);
 	}
 
 	/**
-	 * The Regularized Incomplete BetaFunction.
+	 * The Regularized Incomplete BetaFunction
+	 * a and b are RationalNumbers with denominator equal to 2, x is a double.
 	 */
-	public static double RegularizedIncompleteBetaFunction(double x, RationalNumber a, RationalNumber b) {
-		//TODO: this is the difficult part. It needs a cache of sums of polynomials
-		//  if we're using the recurrence relations and that's my intention.
-		return 0;
+	public static double RegularizedIncompleteBetaFunction(double x, RationalNumber a, RationalNumber b) throws Exception {
+		RegularizedIncompleteBetaExpressionInX expr = get(a, b);
+		return expr.eval(x);
 	}
 
+	/**
+	 * Get an object that contains an expression in X for the Regularized Incomplete Beta Function, for a fixed
+	 * combination (a, b) where a and b are RationalNumbers with denominator equal to 2.
+	 */
+	public static RegularizedIncompleteBetaExpressionInX get(RationalNumber a, RationalNumber b) throws Exception {
+		if (cache == null) {
+			cache = new BetaPolynomialsCache();			
+		}
+		if (a.denominator().intValueExact() != 2 || b.denominator().intValueExact() != 2) {
+			throw new Exception("RegularizedIncompleteBetafunction only accepts RationalNumbers with 2 as denominator!");
+		}
+		return cache.getBetaExpressionInX(a.numerator().intValueExact(), b.numerator().intValueExact());
+	}
+
+	private static BetaPolynomialsCache cache;
+	
 	/**
 	 * We use the recurrence relation: Ix(a+1,b) = Ix(a,b) - (x^a(1-x)^b) / a*B(a,b)
 	 * and a similar rule for b:       Ix(a,b+1) = Ix(a,b) + (x^a(1-x)^b) / b*B(a,b)
@@ -80,7 +95,7 @@ public class BetaFunction {
 	private static class BetaPolynomialsCache {
 		//the cache as a 2D array, having a and b as respective indexes
 		PolynomialRationalCoefficients cache[][];
-		int[][] maxA; //2 x 2 array showing the index a up to which the respective subcache is filled
+		int[][] maxA; //2 x 2 array showing the index a up to which the respective sub-cache is filled
 		int[] maxB;   //shows for each index a, to what extent the b dimension is filled
 		
 		public BetaPolynomialsCache() {
@@ -107,12 +122,52 @@ public class BetaFunction {
 		}
 
 		/**
+		 * Get an expression in x for the Regularized Incomplete Beta function for a given a and b, where a and b
+		 * are integers - and twice as large as the usual a and b (to fit the conventions of this cache!)
+		 * @throws Exception 
+		 */
+		public RegularizedIncompleteBetaExpressionInX getBetaExpressionInX(int a, int b) throws Exception {
+			//check if we need to apply mirror symmetry
+			boolean mirrored = false;
+			if (a < b) {
+				mirrored = true;
+				int b0 = a;
+				a = b;
+				b = b0; //swapped a and b
+			}
+			//find the coordinates of the starting point (i, j) for the given (a, b)
+			int i = a % 2;
+			int j = b % 2;
+			//if the needed polynomial is not available in cache, grow the cache!
+			if (cache[a][b] == null) {
+				fillCacheAimingAt(a, b, i, j);
+			}
+			return new RegularizedIncompleteBetaExpressionInX(a, b, i, j, mirrored, cache[a][b]);
+		}
+
+		/**
 		 * Determine suitable starting point, then use the recurrence relations till the required cell (a,b)
 		 * is filled. We follow a rectangular path, first piece parallel to the a-axis, then upwards to (a,b).
-		 * @return the developed polynomial for (a,b)
+		 * @throws Exception 
 		 */
-		public PolynomialRationalCoefficients fillCacheAimingAt(int a, int b) {
-			//TODO
+		private void fillCacheAimingAt(int a, int b, int i, int j) throws Exception {
+			//for the starting point (i, j) to what extent is a series of a's already developed?
+			int maxA = this.maxA[i][j];
+			while (a > maxA) {
+				//move along the line b = j by increasing maxA till it equals a
+				useRelationForA(maxA, j);
+				maxA += 2;
+			}
+			//to what extent is a fitting series of b's already developed? (it is j at the least)
+			int maxB = this.maxB[a];
+			while (b > maxB) {
+				//move upward from (a, maxB) till we meet (a, b)
+				useRelationForB(a, maxB);
+				maxB += 2;
+			}
+			//register new cache state
+			this.maxA[i][j] = a;
+			this.maxB[a] = b;
 		}
 
 		/**
@@ -138,7 +193,7 @@ public class BetaFunction {
 		 */
 		private PolynomialRationalCoefficients newTermForRelation(int a, int b, int ab) throws Exception {
 			//Build the polynomial x^k (1 - x)^l, where k and l are integer counterparts of a and b
-			//   leaving out irrational factors sqrt(x) and srt(1-x) to be collected at the end
+			//   leaving out irrational factors sqrt(x) and sqrt(1-x) to be collected at the end
 			int k = (int)Math.floor(a/2);
 			int l = (int)Math.floor(b/2);
 			PolynomialRationalCoefficients nw = PolynomialRationalCoefficients.CreateFromBinomialInts(1, -1, l);
@@ -152,8 +207,8 @@ public class BetaFunction {
 	}// end BetaPolynomialsCache
 
 	/**
-	 * Simplified values of the complete Betafunction, for halves (rational numbers having denominator 2)
-	 * The value is a product rational * irrational, where the irrational part is either Pi or 1
+	 * Simplified value of the complete Beta function, for halves (rational numbers having denominator 2)
+	 * The value is a product (rational * irrational), where the irrational part is either Pi or 1
 	 */
 	private static class CompleteBetaValueSimplified {
 		private boolean hasPiFactor0;
@@ -167,6 +222,88 @@ public class BetaFunction {
 		}
 		public RationalNumber rational() {
 			return r0;
+		}
+	}
+	
+	/**
+	 * Simplified expression in x for the Regularized Incomplete Beta function, for one particular
+	 * value of (a, b), where a and b are limited to multiples of one half.
+	 * It consists internally of a polynomial with rational coefficients in X, that has to be multiplied by 1 or 2 
+	 * square root expressions involving x, and to which an initial term has to be added (also irrational)
+	 */
+	public static class RegularizedIncompleteBetaExpressionInX {
+		//the conventional a and b (multiples of one half) that this expression is valid for
+		RationalNumber a;
+		RationalNumber b;
+		//the coordinates (i, j) of the starting point, as integers
+		int i; //1 if a is odd, 0 otherwise
+		int j; //1 if b is odd
+		//did we use mirroring to get at the polynomial? then we have to reverse it!
+		boolean mirrored;
+		//the polynomial!
+		PolynomialRationalCoefficients p;
+		
+		private RegularizedIncompleteBetaExpressionInX(int aa, int bb, int i, int j, 
+				boolean mirrored, PolynomialRationalCoefficients p) {
+			this.a = new RationalNumber(aa, 2);
+			this.b = new RationalNumber(bb, 2);
+			this.i = i;
+			this.j = j;
+			this.mirrored = mirrored;
+			this.p = p;
+		}
+		
+		/**
+		 * Evaluate this beta-expression for a given double x-value
+		 */
+		public double eval(double x) {
+			//mirroring rule requires transformation of x
+			if (mirrored) {
+				x = 1 - x;
+			}
+			
+			//evaluate the polynomial
+			double out = p.eval(x);
+			
+			//multiply by max 2 square roots in x, depending on (i, j), and by 1/Pi, also depending on (i, j)
+			if (i == 1) {
+				out *= Math.sqrt(x);
+			}
+			if (j == 1) {
+				out *= Math.sqrt(1 - x);
+			}
+			if (i == 1 && j == 1) {
+				out *= 1/Math.PI;
+			}
+			
+			//add the irrational initial term for Ix(i, j)
+			if (i == 0 && j == 0) {
+				out += x;
+			}
+			if (i == 0 && j == 1) {
+				out += Math.sqrt(x);
+			}
+			if (i == 1 && j == 0) {
+				out += 1 - Math.sqrt(1 - x);
+			}
+			if (i == 1 && j == 1) {
+				out += (-2/Math.PI) * Math.asin(Math.sqrt(1 - x));
+			}
+			return out;
+		}
+
+		/**
+		 * Return the conventional value of 'a' that this expression is valid for, as a multiple of 1/2
+		 */
+		public RationalNumber getA() {
+			return mirrored ? b : a; //reverse the swap we did
+		}
+
+		/**
+		 * Return the conventional value of 'b' that this expression is valid for, as a multiple of 1/2
+		 */
+		public RationalNumber getB() {
+			return mirrored ? a : b;  //reverse the swap we did
 		}
 	}
 }

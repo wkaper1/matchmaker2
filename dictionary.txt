@@ -3,3 +3,5 @@ studentized
 integrator
 multi
 args
+regularized
+subpackage
