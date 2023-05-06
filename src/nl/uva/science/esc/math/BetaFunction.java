@@ -54,12 +54,23 @@ public class BetaFunction {
 	 */
 	public static double RegularizedIncompleteBetaFunction(double x, RationalNumber a, RationalNumber b) throws Exception {
 		RegularizedIncompleteBetaExpressionInX expr = get(a, b);
-		return expr.eval(x);
+		return expr.evalIx(x);
+	}
+
+	/**
+	 * The F cumulative distribution
+	 * d1 and d2 are the degress of freedom (integers) of the statistical variables being compared
+	 */
+	public static double FCumulativeDistribution(double x, int d1, int d2) throws Exception {
+		RegularizedIncompleteBetaExpressionInX expr = get(new RationalNumber(d1, 2), new RationalNumber(d2, 2));
+		return expr.evalFx(x);
 	}
 
 	/**
 	 * Get an object that contains an expression in X for the Regularized Incomplete Beta Function, for a fixed
 	 * combination (a, b) where a and b are RationalNumbers with denominator equal to 2.
+	 * The same object also gives an expression in F (the F statistic) for the cumulative
+	 * F distribution for given degrees of freedom d1 and d2, where d1 = 2*a and d2 = 2*b.
 	 */
 	public static RegularizedIncompleteBetaExpressionInX get(RationalNumber a, RationalNumber b) throws Exception {
 		if (cache == null) {
@@ -228,13 +239,16 @@ public class BetaFunction {
 	/**
 	 * Simplified expression in x for the Regularized Incomplete Beta function, for one particular
 	 * value of (a, b), where a and b are limited to multiples of one half.
+	 * Also: simplified expression in x for the F-cumulative distribution, for one particular combination
+	 * of (d1, d2) where d1 and d2 are the degrees of freedom for the two independent random variables being
+	 * compared, x is the F-statistic in this interpretation.
 	 * It consists internally of a polynomial with rational coefficients in X, that has to be multiplied by 1 or 2 
 	 * square root expressions involving x, and to which an initial term has to be added (also irrational)
 	 */
 	public static class RegularizedIncompleteBetaExpressionInX {
 		//the conventional a and b (multiples of one half) that this expression is valid for
-		RationalNumber a;
-		RationalNumber b;
+		int aa;
+		int bb;
 		//the coordinates (i, j) of the starting point, as integers
 		int i; //1 if a is odd, 0 otherwise
 		int j; //1 if b is odd
@@ -245,18 +259,28 @@ public class BetaFunction {
 		
 		private RegularizedIncompleteBetaExpressionInX(int aa, int bb, int i, int j, 
 				boolean mirrored, PolynomialRationalCoefficients p) {
-			this.a = new RationalNumber(aa, 2);
-			this.b = new RationalNumber(bb, 2);
+			this.aa = aa;
+			this.bb = bb;
 			this.i = i;
 			this.j = j;
 			this.mirrored = mirrored;
 			this.p = p;
 		}
+
+		/**
+		 * Evaluate this expression interpreted as a cumulative F-distribution for given
+		 * degrees of freedom of the two statistical variables d1 and d2; x is the F-statistic
+		 */
+		public double evalFx(double x) {
+			//transform x, using d1 and d2 (really aa and bb)
+			x = aa * x / (aa * x + bb);
+			return evalIx(x);
+		}
 		
 		/**
-		 * Evaluate this beta-expression for a given double x-value
+		 * Evaluate this regularized incomplete beta-expression for a given double x-value
 		 */
-		public double eval(double x) {
+		public double evalIx(double x) {
 			//mirroring rule requires transformation of x
 			if (mirrored) {
 				x = 1 - x;
@@ -296,14 +320,28 @@ public class BetaFunction {
 		 * Return the conventional value of 'a' that this expression is valid for, as a multiple of 1/2
 		 */
 		public RationalNumber getA() {
-			return mirrored ? b : a; //reverse the swap we did
+			return mirrored ? new RationalNumber(bb, 2) : new RationalNumber(aa, 2); //reverse the swap we did
 		}
 
 		/**
 		 * Return the conventional value of 'b' that this expression is valid for, as a multiple of 1/2
 		 */
 		public RationalNumber getB() {
-			return mirrored ? a : b;  //reverse the swap we did
+			return mirrored ? new RationalNumber(aa, 2) : new RationalNumber(bb, 2);  //reverse the swap we did
+		}
+
+		/**
+		 * Return the degrees of freedom 'd1' of the first statistic variable that this expression is valid for
+		 */
+		public int getD1() {
+			return mirrored ? bb : aa;
+		}
+		
+		/**
+		 * Return the degrees of freedom 'd2' of the second statistic variable that this expression is valid for
+		 */
+		public int getD2() {
+			return mirrored ? aa : bb;
 		}
 	}
 }
